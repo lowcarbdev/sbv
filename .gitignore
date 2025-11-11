@@ -1,0 +1,22 @@
+# Backend
+tmp/
+*.db
+messages.db
+build-errors.log
+sbv
+sbv-server
+data/
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env.local
+frontend/.env
+
+# General
+*.log
+*.tmp
+.DS_Store
+._.DS_Store
+.vscode/
+.idea/

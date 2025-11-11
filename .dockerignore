@@ -1,0 +1,39 @@
+# Git
+.git
+.gitignore
+
+# Data files
+*.db
+*.db-shm
+*.db-wal
+data/
+
+# Node modules
+frontend/node_modules
+node_modules
+
+# Build artifacts
+sbv
+frontend/dist
+
+# Development files
+.air.toml
+tmp/
+*.log
+
+# IDE
+.vscode
+.idea
+
+# Documentation
+README.md
+*.md
+
+# Docker
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# Test files
+backend/testdata
+*_test.go

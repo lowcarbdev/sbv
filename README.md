@@ -1,0 +1,66 @@
+# SMS Backup Viewer (SBV)
+
+A modern web application for viewing SMS and MMS message backups. Import your messages from "SMS Backup & Restore" XML files and browse them in a texting app-like interface.
+
+## Demo
+
+
+## Quick Start
+docker:
+```bash
+docker run -d \
+  -p 8081:8081 \
+  -v $(pwd)/data:/data \
+  -e DB_PATH_PREFIX=/data \
+  lowcarbdev/sbv
+```
+
+docker-compose:
+```
+services:
+  sbv:
+    image: lowcarbdev/sbv
+    ports:
+      - "8081:8081"
+    volumes:
+      # Mount data directory for persistent database storage
+      - ./data:/data
+    environment:
+      - PORT=8081
+      - DB_PATH_PREFIX=/data
+    restart: unless-stopped
+```
+
+## Features
+
+- **Multi-user** - Create a username/password to log in
+- **Import SMS Backup & Restore XML** - Upload XML files from the web interface.
+- **Tested with large backups** - Works with multi-GB backups
+- **SMS, MMS, and call logs support** - Read all types of call and message records.
+- **Inline image and video** - View images or watch videos as you browse. Even works with Apple HEIC and 3gp videos.
+- **Fast conversation filtering** - Skip to the right conversation.
+- **Full-text search** - Find what you want fast.
+- **Activity view** - See it as it happened.
+- **vCard preview** - Preview the contents of contact cards (vCards)
+
+## Tech Stack
+
+- **Backend**: Go with SQLite database
+- **Frontend**: React with Vite and Bootstrap CSS
+- **Database**: SQLite (stores messages, including media as BLOBs)
+
+## Data Persistence
+
+The Docker setup uses a bind mount to persist the database:
+- Host path: `./data/sbv*.db`
+- Container path: `/data/sbv*.db`
+
+This ensures your data survives container restarts and updates.
+
+## License
+
+MIT
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.

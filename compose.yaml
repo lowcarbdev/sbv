@@ -1,0 +1,19 @@
+services:
+  sbv:
+    build: .
+    container_name: sbv
+    ports:
+      - "8081:8081"
+    volumes:
+      # Mount data directory for persistent database storage
+      - ./data:/data
+    environment:
+      - PORT=8081
+      - DB_PATH_PREFIX=/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8081/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
