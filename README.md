@@ -59,6 +59,8 @@ The Docker setup uses a bind mount to persist the database:
 
 This ensures your data survives container restarts and updates.
 
+One sqlite database is created per user.
+
 ## License
 
 MIT
