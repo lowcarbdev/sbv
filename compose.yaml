@@ -1,6 +1,9 @@
 services:
   sbv:
-    build: .
+    # Use pre-built image from GitHub Container Registry
+    # For local development, comment out 'image' and uncomment 'build: .' below
+    image: ghcr.io/lowcarbdev/sbv:stable
+    # build: .
     container_name: sbv
     ports:
       - "8081:8081"

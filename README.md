@@ -5,20 +5,33 @@ A modern web application for viewing SMS and MMS message backups. Import your me
 ![conversation view](docs/conversation-view.png "SBV Conversation View")
 
 ## Quick Start
-docker:
+
+### Docker
+
+Run the latest stable version:
 ```bash
 docker run -d \
   -p 8081:8081 \
   -v $(pwd)/data:/data \
   -e DB_PATH_PREFIX=/data \
-  lowcarbdev/sbv
+  ghcr.io/lowcarbdev/sbv:stable
 ```
 
-docker-compose:
+Or run the latest development version:
+```bash
+docker run -d \
+  -p 8081:8081 \
+  -v $(pwd)/data:/data \
+  -e DB_PATH_PREFIX=/data \
+  ghcr.io/lowcarbdev/sbv:latest
 ```
+
+### Docker Compose
+
+```yaml
 services:
   sbv:
-    image: lowcarbdev/sbv
+    image: ghcr.io/lowcarbdev/sbv:stable
     ports:
       - "8081:8081"
     volumes:
@@ -29,6 +42,14 @@ services:
       - DB_PATH_PREFIX=/data
     restart: unless-stopped
 ```
+
+### Available Image Tags
+
+- `stable` - Latest stable release (recommended for production)
+- `latest` - Latest build from main branch (development)
+- `v0.1.0` - Specific version (e.g., v0.1.0)
+- `v0.1` - Latest patch version of v0.1.x
+- `v0` - Latest minor version of v0.x.x
 
 ## Features
 
