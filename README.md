@@ -2,7 +2,9 @@
 
 A modern web application for viewing SMS and MMS message backups. Import your messages from "SMS Backup & Restore" XML files and browse them in a texting app-like interface.
 
-## Demo
+## Screenshots
+
+![conversation view](docs/conversation-view.png "SBV Conversation View")
 
 
 ## Quick Start
