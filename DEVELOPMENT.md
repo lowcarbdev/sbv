@@ -11,6 +11,15 @@
 
 Build with `go build -tags "fts5 heic"`
 
+To run the latest development version:
+```bash
+docker run -d \
+  -p 8081:8081 \
+  -v $(pwd)/data:/data \
+  -e DB_PATH_PREFIX=/data \
+  ghcr.io/lowcarbdev/sbv:latest
+```
+
 ## Tests
 
 Run all tests:

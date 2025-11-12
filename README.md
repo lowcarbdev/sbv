@@ -17,15 +17,6 @@ docker run -d \
   ghcr.io/lowcarbdev/sbv:stable
 ```
 
-Or run the latest development version:
-```bash
-docker run -d \
-  -p 8081:8081 \
-  -v $(pwd)/data:/data \
-  -e DB_PATH_PREFIX=/data \
-  ghcr.io/lowcarbdev/sbv:latest
-```
-
 ### Docker Compose
 
 ```yaml
@@ -42,14 +33,6 @@ services:
       - DB_PATH_PREFIX=/data
     restart: unless-stopped
 ```
-
-### Available Image Tags
-
-- `stable` - Latest stable release (recommended for production)
-- `latest` - Latest build from main branch (development)
-- `v0.1.0` - Specific version (e.g., v0.1.0)
-- `v0.1` - Latest patch version of v0.1.x
-- `v0` - Latest minor version of v0.x.x
 
 ## Features
 
