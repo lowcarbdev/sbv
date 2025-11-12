@@ -45,15 +45,12 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Tag as 'latest' for main branch
-            type=raw,value=latest,enable={{is_default_branch}}
-            # Tag with branch name and short SHA for all branches
-            type=ref,event=branch,suffix=-{{sha}}
-            # Tag with semantic version for tags
+            type=ref,event=branch
+            type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
-            # Tag as 'stable' for version tags
+            type=raw,value=latest,enable={{is_default_branch}}
             type=raw,value=stable,enable={{is_default_branch}}
           flavor: |
             latest=false
