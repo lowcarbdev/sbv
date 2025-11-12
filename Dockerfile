@@ -36,6 +36,7 @@ RUN go mod download
 
 # Copy backend source
 COPY *.go ./
+COPY internal/*.go internal/
 
 # Build with FTS5 support
 RUN go build -tags "fts5 heic" -o sbv .
