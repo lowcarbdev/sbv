@@ -73,7 +73,7 @@ MIT
 - In group MMS, the sender label only shows the phone number (not contact name) because the contact name is not available in the XML file
 
 ## Screenshots
-
+![login](docs/login.png "Login")
 ![upload backup](docs/upload-backup.png "Upload Backup")
 ![upload complete](docs/upload-complete.png "Upload Complete")
 ![conversation view](docs/conversation-view.png "Conversation View")
