@@ -2,10 +2,7 @@
 
 A modern web application for viewing SMS and MMS message backups. Import your messages from "SMS Backup & Restore" XML files and browse them in a texting app-like interface.
 
-## Screenshots
-
 ![conversation view](docs/conversation-view.png "SBV Conversation View")
-
 
 ## Quick Start
 docker:
@@ -74,3 +71,12 @@ MIT
 
 - Imports are somewhat slow for large imports on Linux
 - In group MMS, the sender label only shows the phone number (not contact name) because the contact name is not available in the XML file
+
+## Screenshots
+
+![upload backup](docs/upload-backup.png "Upload Backup")
+![upload complete](docs/upload-complete.png "Upload Complete")
+![conversation view](docs/conversation-view.png "Conversation View")
+![search view](docs/search-view.png "Search View")
+![activity view](docs/activity-view.png "Activity View")
+![inline images](docs/inline-images.png "Inline Image")
