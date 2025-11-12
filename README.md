@@ -13,7 +13,6 @@ Run the latest stable version:
 docker run -d \
   -p 8081:8081 \
   -v $(pwd)/data:/data \
-  -e DB_PATH_PREFIX=/data \
   ghcr.io/lowcarbdev/sbv:stable
 ```
 
@@ -26,11 +25,7 @@ services:
     ports:
       - "8081:8081"
     volumes:
-      # Mount data directory for persistent database storage
       - ./data:/data
-    environment:
-      - PORT=8081
-      - DB_PATH_PREFIX=/data
     restart: unless-stopped
 ```
 
