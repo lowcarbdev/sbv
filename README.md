@@ -63,4 +63,10 @@ MIT
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+- Please submit any issues to github issues
+- PRs are welcome, but for anything over ~100 lines, please submit a github discussion first
+
+## Known Issues
+
+- Imports are somewhat slow for large imports on Linux
+- In group MMS, the sender label only shows the phone number (not contact name) because the contact name is not available in the XML file
