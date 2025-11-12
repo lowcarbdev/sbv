@@ -45,16 +45,18 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            # Tag with branch name and short SHA for non-main branches
-            type=ref,event=branch,suffix=-{{sha}},enable=${{ github.ref != 'refs/heads/main' }}
             # Tag as 'latest' for main branch
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value=latest,enable={{is_default_branch}}
+            # Tag with branch name and short SHA for non-main branches (only when not main/master)
+            type=ref,event=branch,suffix=-{{sha}},enable=${{ !contains(fromJSON('["main", "master"]'), github.ref_name) }}
             # Tag with semantic version for tags
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
             # Tag as 'stable' for version tags
             type=raw,value=stable,enable=${{ startsWith(github.ref, 'refs/tags/v') }}
+          flavor: |
+            latest=false
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
