@@ -48,12 +48,13 @@ FROM alpine:3
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install runtime dependencies including su-exec for user switching
 RUN apk add --no-cache \
     ca-certificates \
     wget \
     ffmpeg \
-    libheif
+    libheif \
+    su-exec
 
 # Copy backend binary
 COPY --from=backend-builder /app/sbv .
@@ -61,15 +62,24 @@ COPY --from=backend-builder /app/sbv .
 # Copy frontend build
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 # Create data directory for database
 RUN mkdir -p /data
 
 # Set environment variables
-ENV PORT=8081
-ENV DB_PATH_PREFIX=/data
+ENV PORT=8081 \
+    DB_PATH_PREFIX=/data \
+    PUID=1000 \
+    PGID=1000
 
 # Expose port
 EXPOSE 8081
+
+# Use entrypoint to handle user switching
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
 
 # Run the application
 CMD ["./sbv"]

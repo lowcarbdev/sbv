@@ -13,6 +13,8 @@ Run the latest stable version:
 docker run -d \
   -p 8081:8081 \
   -v $(pwd)/data:/data \
+  -e PUID=1000 \
+  -e PGID=1000 \
   ghcr.io/lowcarbdev/sbv:stable
 ```
 
@@ -26,6 +28,9 @@ services:
       - "8081:8081"
     volumes:
       - ./data:/data
+    environment:
+      - PUID=1000
+      - PGID=1000
     restart: unless-stopped
 ```
 
@@ -46,6 +51,13 @@ services:
 - **Backend**: Go with SQLite database
 - **Frontend**: React with Vite and Bootstrap CSS
 - **Database**: SQLite (stores messages, including media as BLOBs)
+
+## Environment Variables
+
+- `PUID` - User ID to run the application as (default: `1000`)
+- `PGID` - Group ID to run the application as (default: `1000`)
+
+**Note on PUID/PGID**: Setting these to match your host user ensures that files created in the mounted volume have the desired permissions. Find your UID/GID with `id -u` and `id -g`.
 
 ## Data Persistence
 
