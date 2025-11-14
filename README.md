@@ -38,6 +38,7 @@ services:
 
 - **Multi-user** - Create a username/password to log in
 - **Import SMS Backup & Restore XML** - Upload XML files from the web interface.
+- **Idempotent imports** - Upload the same messages without duplicates.
 - **Tested with large backups** - Works with multi-GB backups
 - **SMS, MMS, and call logs support** - Read all types of call and message records.
 - **Inline image and video** - View images or watch videos as you browse. Even works with Apple HEIC and 3gp videos.
