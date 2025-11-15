@@ -79,6 +79,16 @@ MIT
 - Please submit any issues to github issues
 - PRs are welcome, but for anything over ~100 lines, please submit a github discussion first
 
+## FAQ
+
+Q: What backups does this program support?
+
+XML backups from the [SMS Backup & Restore app](https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore&hl=en_US). Android devices are supported. iPhone (iOS) devices are not supported by SMS Backup & Restore.
+
+Q: What media and attachments can be previewed?
+
+SBV supports most images formats (jpg, png, gif, heic) and video formats (mp4, 3gp). Contact cards (aka vCard or VCF) are supported.
+
 ## Known Issues
 
 - Imports are somewhat slow for large imports on Linux
