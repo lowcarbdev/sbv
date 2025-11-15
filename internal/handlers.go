@@ -1,6 +1,5 @@
 package internal
 
-
 import (
 	"database/sql"
 	"fmt"
@@ -247,6 +246,58 @@ func HandleActivity(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, activities)
+}
+
+func HandleCalls(c echo.Context) error {
+	userDB, err := getUserDB(c)
+	if err != nil {
+		slog.Error("Error getting user database", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to get user database",
+		})
+	}
+
+	var startDate, endDate *time.Time
+
+	if startStr := c.QueryParam("start"); startStr != "" {
+		t, err := time.Parse(time.RFC3339, startStr)
+		if err == nil {
+			startDate = &t
+		}
+	}
+
+	if endStr := c.QueryParam("end"); endStr != "" {
+		t, err := time.Parse(time.RFC3339, endStr)
+		if err == nil {
+			endDate = &t
+		}
+	}
+
+	// Parse pagination parameters
+	limit := 50 // default limit
+	offset := 0 // default offset
+
+	if limitStr := c.QueryParam("limit"); limitStr != "" {
+		if val, err := strconv.Atoi(limitStr); err == nil {
+			limit = val
+		}
+	}
+
+	if offsetStr := c.QueryParam("offset"); offsetStr != "" {
+		if val, err := strconv.Atoi(offsetStr); err == nil {
+			offset = val
+		}
+	}
+
+	calls, err := GetAllCalls(userDB, startDate, endDate, limit, offset)
+	if err != nil {
+		slog.Error("Error getting calls", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to get calls",
+		})
+	}
+
+	return c.JSON(http.StatusOK, calls)
 }
 
 func HandleDateRange(c echo.Context) error {

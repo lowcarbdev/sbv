@@ -6,6 +6,7 @@ import { useAuth } from './contexts/AuthContext'
 import ConversationList from './components/ConversationList'
 import MessageThread from './components/MessageThread'
 import Activity from './components/Activity'
+import Calls from './components/Calls'
 import DateFilter from './components/DateFilter'
 import Upload from './components/Upload'
 import Search from './components/Search'
@@ -38,6 +39,8 @@ function App() {
   // Derive activeView from URL
   const activeView = location.pathname.startsWith('/activity')
     ? 'activity'
+    : location.pathname.startsWith('/calls')
+    ? 'calls'
     : location.pathname.startsWith('/search')
     ? 'search'
     : 'conversations'
@@ -112,6 +115,8 @@ function App() {
   const handleViewChange = (view) => {
     if (view === 'activity') {
       navigate('/activity')
+    } else if (view === 'calls') {
+      navigate('/calls')
     } else if (view === 'search') {
       navigate('/search')
     } else {
@@ -205,6 +210,17 @@ function App() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
                 Conversations
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                className={`nav-link ${activeView === 'calls' ? 'active' : ''}`}
+                onClick={() => handleViewChange('calls')}
+              >
+                <svg style={{width: '1rem', height: '1rem'}} className="me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                </svg>
+                Calls
               </button>
             </li>
             <li className="nav-item">
@@ -304,6 +320,14 @@ function App() {
               setSearched={setSearchExecuted}
               scrollPosition={searchScrollPosition}
               setScrollPosition={setSearchScrollPosition}
+            />
+          </div>
+        ) : activeView === 'calls' ? (
+          /* Calls View */
+          <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
+            <Calls
+              startDate={startDate}
+              endDate={endDate}
             />
           </div>
         ) : (

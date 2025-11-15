@@ -1,6 +1,5 @@
 package internal
 
-
 import (
 	"database/sql"
 	"fmt"
@@ -590,6 +589,49 @@ func GetCallLogs(userDB *sql.DB, number string, startDate, endDate *time.Time) (
 	}
 
 	query += " ORDER BY date ASC"
+
+	rows, err := userDB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	calls := []CallLog{}
+	for rows.Next() {
+		var c CallLog
+		var dateUnix int64
+		err := rows.Scan(&c.ID, &c.Number, &c.Duration, &dateUnix, &c.Type,
+			&c.Presentation, &c.SubscriptionID, &c.ContactName)
+		if err != nil {
+			return nil, err
+		}
+		c.Date = time.Unix(dateUnix, 0)
+		calls = append(calls, c)
+	}
+
+	return calls, nil
+}
+
+func GetAllCalls(userDB *sql.DB, startDate, endDate *time.Time, limit, offset int) ([]CallLog, error) {
+	query := `
+		SELECT id, address, duration, date, type,
+		       COALESCE(presentation, 0), COALESCE(subscription_id, ''), COALESCE(contact_name, '')
+		FROM messages
+		WHERE record_type = 3  -- 3 = call
+	`
+
+	args := []interface{}{}
+	if startDate != nil {
+		query += " AND date >= ?"
+		args = append(args, startDate.Unix())
+	}
+	if endDate != nil {
+		query += " AND date <= ?"
+		args = append(args, endDate.Unix())
+	}
+
+	query += " ORDER BY date ASC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
 
 	rows, err := userDB.Query(query, args...)
 	if err != nil {

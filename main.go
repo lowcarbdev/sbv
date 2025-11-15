@@ -7,9 +7,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/lowcarbdev/sbv/internal"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/lowcarbdev/sbv/internal"
 )
 
 var logger *slog.Logger
@@ -69,6 +69,7 @@ func main() {
 	protected.GET("/conversations", internal.HandleConversations)
 	protected.GET("/messages", internal.HandleMessages)
 	protected.GET("/activity", internal.HandleActivity)
+	protected.GET("/calls", internal.HandleCalls)
 	protected.GET("/daterange", internal.HandleDateRange)
 	protected.GET("/progress", internal.HandleProgress)
 	protected.GET("/media", internal.HandleMedia)
