@@ -36,7 +36,8 @@ function MessageThread({ conversation, startDate, endDate }) {
           const waitForMediaInElement = (elem) => {
             const images = Array.from(elem.querySelectorAll('img'))
             const videos = Array.from(elem.querySelectorAll('video'))
-            const media = [...images, ...videos]
+            const audios = Array.from(elem.querySelectorAll('audio'))
+            const media = [...images, ...videos, ...audios]
 
             if (media.length === 0) {
               return Promise.resolve()
@@ -131,7 +132,8 @@ function MessageThread({ conversation, startDate, endDate }) {
           const waitForMediaInElement = (elem) => {
             const images = Array.from(elem.querySelectorAll('img'))
             const videos = Array.from(elem.querySelectorAll('video'))
-            const media = [...images, ...videos]
+            const audios = Array.from(elem.querySelectorAll('audio'))
+            const media = [...images, ...videos, ...audios]
 
             if (media.length === 0) {
               return Promise.resolve()

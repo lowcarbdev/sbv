@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import VCardPreview from './VCardPreview'
+import './LazyMedia.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
 
@@ -128,6 +129,7 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
 
   const isImage = mediaType.startsWith('image/')
   const isVideo = mediaType.startsWith('video/')
+  const isAudio = mediaType.startsWith('audio/')
   const isVCard = mediaType === 'text/x-vcard' ||
                   mediaType === 'text/vcard' ||
                   mediaType === 'text/directory'
@@ -141,9 +143,9 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
           className="bg-light rounded d-flex align-items-center justify-content-center position-relative overflow-hidden"
           style={{
             width: '100%',
-            aspectRatio: isVideo ? '16/9' : '3/4', // Common phone camera ratio
-            minHeight: isVideo ? '200px' : '300px', // Larger to prevent layout shift
-            maxHeight: '400px',
+            aspectRatio: isVideo ? '16/9' : isAudio ? 'auto' : '3/4', // Common phone camera ratio
+            minHeight: isVideo ? '200px' : isAudio ? '80px' : '300px', // Larger to prevent layout shift
+            maxHeight: isAudio ? '80px' : '400px',
             backgroundColor: '#f8f9fa',
             backgroundImage: 'linear-gradient(45deg, #e9ecef 25%, transparent 25%, transparent 75%, #e9ecef 75%, #e9ecef), linear-gradient(45deg, #e9ecef 25%, transparent 25%, transparent 75%, #e9ecef 75%, #e9ecef)',
             backgroundSize: '20px 20px',
@@ -156,7 +158,7 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
                 <div className="spinner-border spinner-border-sm text-secondary mb-2" role="status">
                   <span className="visually-hidden">Loading...</span>
                 </div>
-                <div className="small text-muted">Loading {isImage ? 'image' : isVideo ? 'video' : isVCard ? 'contact' : 'media'}...</div>
+                <div className="small text-muted">Loading {isImage ? 'image' : isVideo ? 'video' : isAudio ? 'audio' : isVCard ? 'contact' : 'media'}...</div>
               </>
             ) : (
               <div className="text-muted d-flex flex-column align-items-center">
@@ -170,18 +172,23 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
                   </svg>
                 )}
+                {isAudio && (
+                  <svg style={{width: '2.5rem', height: '2.5rem'}} className="mb-2 text-secondary opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                )}
                 {isVCard && (
                   <svg style={{width: '2.5rem', height: '2.5rem'}} className="mb-2 text-secondary opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
                 )}
-                {!isImage && !isVideo && !isVCard && (
+                {!isImage && !isVideo && !isAudio && !isVCard && (
                   <svg style={{width: '2.5rem', height: '2.5rem'}} className="mb-2 text-secondary opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                   </svg>
                 )}
                 <small className="text-muted">
-                  {isImage ? 'Image' : isVideo ? 'Video' : isVCard ? 'Contact' : 'Attachment'}
+                  {isImage ? 'Image' : isVideo ? 'Video' : isAudio ? 'Audio' : isVCard ? 'Contact' : 'Attachment'}
                 </small>
               </div>
             )}
@@ -242,10 +249,19 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
               }}
             />
           )}
+          {isAudio && src && (
+            <div style={{ width: '100%', animation: 'fadeIn 0.3s ease-in' }}>
+              <audio
+                controls
+                src={src}
+                className="audio-player"
+              />
+            </div>
+          )}
           {isVCard && vcfData && (
             <VCardPreview vcfText={vcfData} messageId={messageId} />
           )}
-          {!isImage && !isVideo && !isVCard && (
+          {!isImage && !isVideo && !isAudio && !isVCard && (
             <div className="small p-2 rounded bg-light d-flex align-items-center gap-1">
               <svg style={{width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />

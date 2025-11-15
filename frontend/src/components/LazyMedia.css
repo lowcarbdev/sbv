@@ -1,0 +1,88 @@
+/* Audio Player Styling - Wide timeline control for easier seeking */
+
+/* Make audio player fill width and ensure it's displayed properly */
+.audio-player {
+  width: 100% !important;
+  min-width: 320px;
+  height: 54px;
+  outline: none;
+  display: block;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+}
+
+/* Chrome/Safari/Edge - Webkit browsers */
+.audio-player::-webkit-media-controls-panel {
+  width: 100%;
+  background-color: #f8f9fa;
+  border-radius: 0.375rem;
+  padding: 8px 12px;
+}
+
+/* Ensure enclosure takes full width */
+.audio-player::-webkit-media-controls-enclosure {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 0.375rem;
+}
+
+/* Make the timeline container wider */
+.audio-player::-webkit-media-controls-timeline-container {
+  flex: 1 1 auto;
+  min-width: 150px;
+}
+
+/* Make the timeline/seek bar taller and more prominent */
+.audio-player::-webkit-media-controls-timeline {
+  border-radius: 6px;
+  flex: 1 1 auto;
+  margin: 0 12px;
+  padding: 0;
+}
+
+/* Style the timeline track */
+.audio-player::-webkit-media-controls-timeline::-webkit-slider-runnable-track {
+  border-radius: 6px;
+}
+
+.audio-player::-webkit-media-controls-timeline::-webkit-slider-thumb {
+  height: 20px;
+  width: 20px;
+}
+
+/* Make the time displays more readable */
+.audio-player::-webkit-media-controls-current-time-display,
+.audio-player::-webkit-media-controls-time-remaining-display {
+  font-size: 14px;
+  min-width: 48px;
+  color: #495057;
+}
+
+/* Style buttons */
+.audio-player::-webkit-media-controls-play-button,
+.audio-player::-webkit-media-controls-mute-button {
+  width: 32px;
+  height: 32px;
+}
+
+/* Firefox - Moz browsers */
+.audio-player::-moz-range-track {
+  height: 12px;
+  border-radius: 6px;
+  background-color: #dee2e6;
+}
+
+.audio-player::-moz-range-thumb {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background-color: #0d6efd;
+  border: none;
+  cursor: pointer;
+}
+
+.audio-player::-moz-range-progress {
+  height: 12px;
+  border-radius: 6px;
+  background-color: #0d6efd;
+}

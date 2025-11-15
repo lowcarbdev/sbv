@@ -87,7 +87,7 @@ XML backups from the [SMS Backup & Restore app](https://play.google.com/store/ap
 
 Q: What media and attachments can be previewed?
 
-SBV supports most images formats (jpg, png, gif, heic) and video formats (mp4, 3gp). Contact cards (aka vCard or VCF) are supported.
+SBV supports most images formats (jpg, png, gif, heic), video formats (mp4, 3gp), audio (mp4). Contact cards (aka vCard or VCF) are supported.
 
 ## Known Issues
 
