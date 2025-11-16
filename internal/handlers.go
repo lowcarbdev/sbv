@@ -173,9 +173,23 @@ func HandleMessages(c echo.Context) error {
 
 	// If type is "conversation", return combined messages and calls
 	if convType == "conversation" {
-		// Use a large limit to get all activity for this address
-		// We don't use pagination here since we want all items for the thread view
-		activities, err := GetActivityByAddress(userDB, address, startDate, endDate, 10000, 0)
+		// Parse limit and offset parameters
+		limit := 100000 // Default to 100k (effectively unlimited for most users)
+		offset := 0
+
+		if limitStr := c.QueryParam("limit"); limitStr != "" {
+			if parsedLimit, err := strconv.Atoi(limitStr); err == nil && parsedLimit > 0 {
+				limit = parsedLimit
+			}
+		}
+
+		if offsetStr := c.QueryParam("offset"); offsetStr != "" {
+			if parsedOffset, err := strconv.Atoi(offsetStr); err == nil && parsedOffset >= 0 {
+				offset = parsedOffset
+			}
+		}
+
+		activities, err := GetActivityByAddress(userDB, address, startDate, endDate, limit, offset)
 		if err != nil {
 			slog.Error("Error getting activity", "error", err)
 			return c.JSON(http.StatusInternalServerError, map[string]string{
