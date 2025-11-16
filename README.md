@@ -38,7 +38,7 @@ services:
 
 - **Multi-user** - Create a username/password to log in
 - **Import SMS Backup & Restore XML** - Upload XML files from the web interface.
-- **Idempotent imports** - Upload the same messages without duplicates.
+- **Idempotent imports** - Upload the same XML file without duplicates.
 - **Tested with large backups** - Works with multi-GB backups
 - **SMS, MMS, and call logs support** - Read all types of call and message records.
 - **Inline image and video** - View images or watch videos as you browse. Even works with Apple HEIC and 3gp videos.
@@ -89,10 +89,19 @@ Q: What media and attachments can be previewed?
 
 SBV supports most images formats (jpg, png, gif, heic), video formats (mp4, 3gp), audio (mp4). Contact cards (aka vCard or VCF) are supported.
 
+Q: Why do I only see calls or messages, but not both?
+
+SMS Backup & Restore creates two separate backup files, beginning with `calls-` and `sms-`. Make sure you import both to see the complete picture.
+
+Q: Can I save just the sqlite db and delete the XML files?
+
+The sqlite database doesn't retain all information that is produced by the XML file. It is recommended to retain the XML file as your backup, then import into this app as needed.
+
 ## Known Issues
 
-- Imports are somewhat slow for large imports on Linux
+- Imports are somewhat slow for large imports on Linux, especially when media is present
 - In group MMS, the sender label only shows the phone number (not contact name) because the contact name is not available in the XML file
+- There is currently a 100k message limit per conversation. To see older messages, filter by date.
 
 ## Screenshots
 ![login](docs/login.png "Login")
