@@ -108,11 +108,44 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
       document.addEventListener('keydown', handleEscape)
       // Prevent body scroll when modal is open
       document.body.style.overflow = 'hidden'
+
+      // Hide UI elements that might appear over the full-screen modal
+      const datePickers = document.querySelectorAll('.react-datepicker-popper')
+      datePickers.forEach(picker => {
+        picker.style.display = 'none'
+      })
+
+      const dateFilterContainer = document.querySelector('.date-filter-container')
+      if (dateFilterContainer) {
+        dateFilterContainer.style.visibility = 'hidden'
+      }
+
+      // Hide the page header
+      const header = document.querySelector('header')
+      if (header) {
+        header.style.visibility = 'hidden'
+      }
     }
 
     return () => {
       document.removeEventListener('keydown', handleEscape)
       document.body.style.overflow = 'unset'
+
+      // Restore visibility of hidden elements
+      const datePickers = document.querySelectorAll('.react-datepicker-popper')
+      datePickers.forEach(picker => {
+        picker.style.display = ''
+      })
+
+      const dateFilterContainer = document.querySelector('.date-filter-container')
+      if (dateFilterContainer) {
+        dateFilterContainer.style.visibility = ''
+      }
+
+      const header = document.querySelector('header')
+      if (header) {
+        header.style.visibility = ''
+      }
     }
   }, [showModal])
 

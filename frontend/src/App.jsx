@@ -255,7 +255,7 @@ function App() {
       </div>
 
       {/* Date Filter */}
-      <div className="bg-white border-bottom shadow-sm" style={{zIndex: 1025, position: 'relative'}}>
+      <div className="date-filter-container bg-white border-bottom shadow-sm" style={{zIndex: 1025, position: 'relative'}}>
         <DateFilter
           startDate={startDate}
           endDate={endDate}
