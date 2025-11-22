@@ -146,7 +146,7 @@ function App() {
   return (
     <div className="vh-100 d-flex flex-column bg-light">
       {/* Header */}
-      <header className="bg-primary bg-gradient text-white py-1 px-2 shadow">
+      <header className="bg-primary bg-gradient text-white py-1 px-2 shadow" style={{zIndex: 1030}}>
         <div className="d-flex justify-content-between align-items-center">
           <div className="d-flex align-items-center gap-2">
             <svg style={{width: '1.75rem', height: '1.75rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -155,9 +155,6 @@ function App() {
             <h1 className="h5 mb-0 fw-bold">SMS Backup Viewer</h1>
           </div>
           <div className="d-flex align-items-center gap-2">
-            <div className="text-end d-none d-md-block">
-              <div className="small fw-semibold">{user?.username}</div>
-            </div>
             <button
               onClick={() => setShowUpload(true)}
               className="btn btn-light btn-sm shadow-sm d-flex align-items-center gap-1"
@@ -179,6 +176,9 @@ function App() {
                 </svg>
               </Dropdown.Toggle>
               <Dropdown.Menu>
+                <Dropdown.ItemText className="fw-semibold">
+                  User: {user?.username}
+                </Dropdown.ItemText>
                 <Dropdown.ItemText className="small text-muted">
                   Version {__APP_VERSION__}
                 </Dropdown.ItemText>
@@ -255,7 +255,7 @@ function App() {
       </div>
 
       {/* Date Filter */}
-      <div className="bg-white border-bottom shadow-sm">
+      <div className="bg-white border-bottom shadow-sm" style={{zIndex: 1025, position: 'relative'}}>
         <DateFilter
           startDate={startDate}
           endDate={endDate}
@@ -306,20 +306,6 @@ function App() {
 
             {/* Message Thread */}
             <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border message-thread-container" style={{minWidth: 0}}>
-              {/* Mobile back button */}
-              {selectedConversation && (
-                <div className="mobile-back-button bg-light border-bottom p-1 d-md-none">
-                  <button
-                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
-                    onClick={() => setShowSidebar(true)}
-                  >
-                    <svg style={{width: '0.875rem', height: '0.875rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                    </svg>
-                    Back
-                  </button>
-                </div>
-              )}
               <MessageThread
                 conversation={selectedConversation}
                 startDate={startDate}

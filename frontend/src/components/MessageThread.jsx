@@ -350,21 +350,21 @@ function MessageThread({ conversation, startDate, endDate }) {
   return (
     <div className="d-flex flex-column h-100">
       {/* Thread Header */}
-      <div className="bg-light border-bottom p-4 shadow-sm">
-        <div className="d-flex align-items-center gap-3">
-          <div className="p-3 rounded-circle bg-primary bg-gradient shadow">
+      <div className="bg-light border-bottom p-2 p-md-4 shadow-sm">
+        <div className="d-flex align-items-center gap-2 gap-md-3">
+          <div className="p-2 p-md-3 rounded-circle bg-primary bg-gradient shadow">
             {isCallLog ? (
-              <svg style={{width: '1.5rem', height: '1.5rem'}} className="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{width: '1.25rem', height: '1.25rem'}} className="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
               </svg>
             ) : (
-              <svg style={{width: '1.5rem', height: '1.5rem'}} className="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{width: '1.25rem', height: '1.25rem'}} className="text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
               </svg>
             )}
           </div>
-          <div>
-            <h2 className="h4 fw-bold mb-1">
+          <div className="flex-fill">
+            <h2 className="thread-header-title fw-bold mb-1">
               {getDisplayName(conversation)}
             </h2>
             {/* Display phone numbers for conversations with addresses */}
@@ -375,7 +375,7 @@ function MessageThread({ conversation, startDate, endDate }) {
                 ? firstItem.message.addresses
                 : firstItem.addresses
               return addresses && addresses.length > 0 && (
-                <div className="small text-muted mb-2">
+                <div className="small text-muted mb-1">
                   {addresses.map((addr, idx) => (
                     <span key={idx}>
                       {formatPhoneNumber(addr)}
@@ -386,7 +386,7 @@ function MessageThread({ conversation, startDate, endDate }) {
               )
             })()}
             <div>
-              <span className="badge bg-primary">
+              <span className="badge bg-primary" style={{fontSize: '0.7rem'}}>
                 {items.length} {isCallLog ? 'call' : 'message'}{items.length !== 1 ? 's' : ''}
               </span>
             </div>
@@ -395,7 +395,7 @@ function MessageThread({ conversation, startDate, endDate }) {
       </div>
 
       {/* Content */}
-      <div className="flex-fill overflow-auto p-4 bg-light">
+      <div className="flex-fill overflow-auto p-2 p-md-4 bg-light">
         {isCallLog ? (
           // Call Log View
           <div className="d-flex flex-column gap-3">
