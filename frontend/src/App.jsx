@@ -146,38 +146,35 @@ function App() {
   return (
     <div className="vh-100 d-flex flex-column bg-light">
       {/* Header */}
-      <header className="bg-primary bg-gradient text-white p-2 shadow-lg">
+      <header className="bg-primary bg-gradient text-white py-1 px-2 shadow">
         <div className="d-flex justify-content-between align-items-center">
-          <div className="d-flex align-items-center gap-3">
-            <svg style={{width: '2.5rem', height: '2.5rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="d-flex align-items-center gap-2">
+            <svg style={{width: '1.75rem', height: '1.75rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
             </svg>
-            <div>
-              <h1 className="h2 mb-1 fw-bold">SMS Backup Viewer</h1>
-              <p className="mb-0 small opacity-75">View and browse your message history</p>
-            </div>
+            <h1 className="h5 mb-0 fw-bold">SMS Backup Viewer</h1>
           </div>
-          <div className="d-flex align-items-center gap-3">
-            <div className="text-end">
-              <div className="small opacity-75">Logged in as</div>
-              <div className="fw-bold">{user?.username}</div>
+          <div className="d-flex align-items-center gap-2">
+            <div className="text-end d-none d-md-block">
+              <div className="small fw-semibold">{user?.username}</div>
             </div>
             <button
               onClick={() => setShowUpload(true)}
-              className="btn btn-light btn-lg shadow d-flex align-items-center gap-2"
+              className="btn btn-light btn-sm shadow-sm d-flex align-items-center gap-1"
             >
-              <svg style={{width: '1.25rem', height: '1.25rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg style={{width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
-              Upload Backup
+              <span className="d-none d-sm-inline">Upload</span>
             </button>
             <Dropdown align="end">
               <Dropdown.Toggle
                 variant="outline-light"
-                className="d-flex align-items-center gap-2"
+                size="sm"
+                className="d-flex align-items-center"
                 style={{ backgroundColor: 'transparent', borderColor: 'rgba(255, 255, 255, 0.5)' }}
               >
-                <svg style={{width: '1.5rem', height: '1.5rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style={{width: '1.25rem', height: '1.25rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </Dropdown.Toggle>
@@ -270,34 +267,34 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-fill d-flex overflow-hidden gap-2 p-2 position-relative">
+      <div className="flex-fill d-flex overflow-hidden gap-1 p-1 position-relative">
         {activeView === 'conversations' ? (
           <>
             {/* Conversation List */}
             <div
               className={`conversation-sidebar bg-white rounded-3 shadow overflow-hidden border ${showSidebar ? 'show' : ''}`}
             >
-              <div className="bg-light border-bottom p-2">
-                <h2 className="h5 mb-2 d-flex align-items-center gap-2">
-                  <svg style={{width: '1.25rem', height: '1.25rem'}} className="text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="bg-light border-bottom p-1">
+                <h2 className="h6 mb-1 d-flex align-items-center gap-1 px-1">
+                  <svg style={{width: '1rem', height: '1rem'}} className="text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                   </svg>
                   Conversations
                 </h2>
                 <div className="position-relative">
-                  <svg style={{width: '1rem', height: '1rem', position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)'}} className="text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg style={{width: '0.875rem', height: '0.875rem', position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)'}} className="text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <input
                     type="text"
-                    className="form-control form-control-sm ps-5"
-                    placeholder="Search by name or number..."
+                    className="form-control form-control-sm ps-4"
+                    placeholder="Search..."
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
                   />
                 </div>
               </div>
-              <div className="overflow-auto" style={{height: 'calc(100% - 7rem)'}}>
+              <div className="overflow-auto" style={{height: 'calc(100% - 4.5rem)'}}>
                 <ConversationList
                   conversations={filteredConversations}
                   selectedConversation={selectedConversation}
@@ -311,15 +308,15 @@ function App() {
             <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border message-thread-container" style={{minWidth: 0}}>
               {/* Mobile back button */}
               {selectedConversation && (
-                <div className="mobile-back-button bg-light border-bottom p-2 d-md-none">
+                <div className="mobile-back-button bg-light border-bottom p-1 d-md-none">
                   <button
-                    className="btn btn-sm btn-outline-primary"
+                    className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
                     onClick={() => setShowSidebar(true)}
                   >
-                    <svg style={{width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg style={{width: '0.875rem', height: '0.875rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                     </svg>
-                    Back to conversations
+                    Back
                   </button>
                 </div>
               )}
