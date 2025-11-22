@@ -29,6 +29,9 @@ function App() {
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [searchFilter, setSearchFilter] = useState('')
 
+  // Mobile sidebar state
+  const [showSidebar, setShowSidebar] = useState(true)
+
   // Search state (persisted across tab switches)
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState([])
@@ -54,7 +57,7 @@ function App() {
     fetchConversations()
   }, [startDate, endDate])
 
-  // Sync selected conversation from URL
+  // Sync selected conversation from URL and manage sidebar visibility
   useEffect(() => {
     const match = location.pathname.match(/^\/conversation\/(.+)$/)
     if (match) {
@@ -67,8 +70,11 @@ function App() {
         // If conversation not found in list, create a minimal conversation object
         setSelectedConversation({ address, contact_name: address, type: 'message' })
       }
-    } else if (location.pathname === '/' || location.pathname === '/conversations') {
+    } else {
+      // Not viewing a specific conversation
       setSelectedConversation(null)
+      // Show sidebar when navigating to any non-conversation view
+      setShowSidebar(true)
     }
   }, [location.pathname, conversations])
 
@@ -109,6 +115,8 @@ function App() {
   const handleSelectConversation = (conversation) => {
     if (conversation) {
       navigate(`/conversation/${encodeURIComponent(conversation.address)}`)
+      // Hide sidebar on mobile when conversation is selected
+      setShowSidebar(false)
     }
   }
 
@@ -262,11 +270,13 @@ function App() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-fill d-flex overflow-hidden gap-2 p-2">
+      <div className="flex-fill d-flex overflow-hidden gap-2 p-2 position-relative">
         {activeView === 'conversations' ? (
           <>
             {/* Conversation List */}
-            <div style={{width: '380px', minWidth: '380px', maxWidth: '380px', flexShrink: 0}} className="bg-white rounded-3 shadow overflow-hidden border">
+            <div
+              className={`conversation-sidebar bg-white rounded-3 shadow overflow-hidden border ${showSidebar ? 'show' : ''}`}
+            >
               <div className="bg-light border-bottom p-2">
                 <h2 className="h5 mb-2 d-flex align-items-center gap-2">
                   <svg style={{width: '1.25rem', height: '1.25rem'}} className="text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -298,7 +308,21 @@ function App() {
             </div>
 
             {/* Message Thread */}
-            <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
+            <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border message-thread-container" style={{minWidth: 0}}>
+              {/* Mobile back button */}
+              {selectedConversation && (
+                <div className="mobile-back-button bg-light border-bottom p-2 d-md-none">
+                  <button
+                    className="btn btn-sm btn-outline-primary"
+                    onClick={() => setShowSidebar(true)}
+                  >
+                    <svg style={{width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                    </svg>
+                    Back to conversations
+                  </button>
+                </div>
+              )}
               <MessageThread
                 conversation={selectedConversation}
                 startDate={startDate}

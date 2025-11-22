@@ -40,3 +40,46 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Mobile-friendly conversation sidebar */
+.conversation-sidebar {
+  width: 380px;
+  min-width: 380px;
+  max-width: 380px;
+  flex-shrink: 0;
+  transition: transform 0.3s ease-in-out;
+}
+
+/* Mobile styles - screens smaller than 768px (Bootstrap md breakpoint) */
+@media (max-width: 767.98px) {
+  .conversation-sidebar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 100%;
+    height: 100%;
+    z-index: 1000;
+    transform: translateX(-100%);
+  }
+
+  .conversation-sidebar.show {
+    transform: translateX(0);
+  }
+
+  .message-thread-container {
+    width: 100%;
+  }
+}
+
+/* Tablet and desktop - show both sidebar and content */
+@media (min-width: 768px) {
+  .conversation-sidebar {
+    transform: translateX(0) !important;
+  }
+
+  .mobile-back-button {
+    display: none !important;
+  }
+}
