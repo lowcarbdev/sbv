@@ -80,6 +80,9 @@ func main() {
 		return c.String(http.StatusOK, "OK")
 	})
 
+	// Version endpoint (public, no authentication required)
+	e.GET("/api/version", internal.HandleVersion)
+
 	// Serve static files from frontend/dist if it exists (for production/Docker)
 	if _, err := os.Stat("./frontend/dist"); err == nil {
 		// Serve static assets (JS, CSS, images, etc.)

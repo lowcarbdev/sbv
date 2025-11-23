@@ -57,6 +57,20 @@ jobs:
           flavor: |
             latest=false
 
+      - name: Determine version for build
+        id: version
+        run: |
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            # For tags, strip the 'v' prefix
+            VERSION="${{ github.ref_name }}"
+            VERSION="${VERSION#v}"
+          else
+            # For non-tags, use git commit hash with dirty flag
+            VERSION=$(git describe --always --dirty)
+          fi
+          echo "version=git-${VERSION}" >> $GITHUB_OUTPUT
+          echo "Building with version: git-${VERSION}"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
@@ -65,5 +79,7 @@ jobs:
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VERSION=${{ steps.version.outputs.version }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

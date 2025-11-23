@@ -69,6 +69,11 @@ RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 # Create data directory for database
 RUN mkdir -p /data
 
+# Accept version as build argument and generate version.json
+# This is done late in the build to maximize cache layer reuse
+ARG VERSION=dev
+RUN echo "{\"version\":\"${VERSION}\"}" > /app/version.json
+
 # Set environment variables
 ENV PORT=8081 \
     DB_PATH_PREFIX=/data \

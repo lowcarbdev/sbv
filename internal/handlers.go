@@ -2,9 +2,11 @@ package internal
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -421,4 +423,20 @@ func HandleSearch(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, results)
+}
+
+// HandleVersion returns the application version
+func HandleVersion(c echo.Context) error {
+	// Try to read version from version.json file first (Docker builds)
+	versionFile := "/app/version.json"
+	if data, err := os.ReadFile(versionFile); err == nil {
+		var versionData map[string]string
+		if err := json.Unmarshal(data, &versionData); err == nil {
+			return c.JSON(http.StatusOK, versionData)
+		}
+	}
+
+	return c.JSON(http.StatusOK, map[string]string{
+		"version": "dev",
+	})
 }

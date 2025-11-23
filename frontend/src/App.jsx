@@ -28,6 +28,7 @@ function App() {
   const [showUpload, setShowUpload] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [searchFilter, setSearchFilter] = useState('')
+  const [version, setVersion] = useState('...')
 
   // Mobile sidebar state
   const [showSidebar, setShowSidebar] = useState(true)
@@ -51,7 +52,18 @@ function App() {
   useEffect(() => {
     fetchDateRange()
     fetchConversations()
+    fetchVersion()
   }, [])
+
+  const fetchVersion = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/version`)
+      setVersion(response.data.version || 'unknown')
+    } catch (error) {
+      console.error('Failed to fetch version:', error)
+      setVersion('unknown')
+    }
+  }
 
   useEffect(() => {
     fetchConversations()
@@ -177,10 +189,10 @@ function App() {
               </Dropdown.Toggle>
               <Dropdown.Menu>
                 <Dropdown.ItemText className="fw-semibold">
-                  User: {user?.username}
+                  {user?.username}
                 </Dropdown.ItemText>
                 <Dropdown.ItemText className="small text-muted">
-                  Version {__APP_VERSION__}
+                  Version {version}
                 </Dropdown.ItemText>
                 <Dropdown.Divider />
                 <Dropdown.Item onClick={() => setShowPasswordModal(true)}>
