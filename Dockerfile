@@ -41,7 +41,7 @@ COPY internal/*.go internal/
 
 # Build with FTS5 support
 # Use CGO for SQLite and libheif
-RUN CGO_ENABLED=1 go build -tags "fts5" -o sbv .
+RUN CGO_ENABLED=1 go build -tags "heic" -o sbv .
 
 # Stage 3: Final runtime image
 FROM alpine:3
