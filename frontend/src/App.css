@@ -92,3 +92,29 @@
     font-size: 1rem !important;
   }
 }
+
+/* Date picker input sizing */
+.date-picker-input {
+  width: 100%;
+  min-width: 0;
+  font-size: 0.875rem;
+}
+
+/* Date picker wrapper - responsive behavior */
+.date-picker-wrapper {
+  flex-shrink: 0;
+}
+
+/* Mobile date picker - more compact and flexible */
+@media (max-width: 767.98px) {
+  .date-picker-wrapper {
+    flex-grow: 1;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .date-picker-input {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}

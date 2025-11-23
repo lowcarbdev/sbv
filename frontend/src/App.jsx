@@ -82,6 +82,8 @@ function App() {
         // If conversation not found in list, create a minimal conversation object
         setSelectedConversation({ address, contact_name: address, type: 'message' })
       }
+      // Hide sidebar on mobile when viewing a conversation (from direct link or navigation)
+      setShowSidebar(false)
     } else {
       // Not viewing a specific conversation
       setSelectedConversation(null)
@@ -223,10 +225,10 @@ function App() {
                 className={`nav-link ${activeView === 'conversations' ? 'active' : ''}`}
                 onClick={() => handleViewChange('conversations')}
               >
-                <svg style={{width: '1rem', height: '1rem'}} className="me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style={{width: '1rem', height: '1rem'}} className="me-sm-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
-                Conversations
+                <span className="d-none d-sm-inline">Conversations</span>
               </button>
             </li>
             <li className="nav-item">
@@ -234,10 +236,10 @@ function App() {
                 className={`nav-link ${activeView === 'calls' ? 'active' : ''}`}
                 onClick={() => handleViewChange('calls')}
               >
-                <svg style={{width: '1rem', height: '1rem'}} className="me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style={{width: '1rem', height: '1rem'}} className="me-sm-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                Calls
+                <span className="d-none d-sm-inline">Calls</span>
               </button>
             </li>
             <li className="nav-item">
@@ -245,10 +247,10 @@ function App() {
                 className={`nav-link ${activeView === 'search' ? 'active' : ''}`}
                 onClick={() => handleViewChange('search')}
               >
-                <svg style={{width: '1rem', height: '1rem'}} className="me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style={{width: '1rem', height: '1rem'}} className="me-sm-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                 </svg>
-                Search
+                <span className="d-none d-sm-inline">Search</span>
               </button>
             </li>
             <li className="nav-item">
@@ -256,10 +258,10 @@ function App() {
                 className={`nav-link ${activeView === 'activity' ? 'active' : ''}`}
                 onClick={() => handleViewChange('activity')}
               >
-                <svg style={{width: '1rem', height: '1rem'}} className="me-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg style={{width: '1rem', height: '1rem'}} className="me-sm-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Activity
+                <span className="d-none d-sm-inline">Activity</span>
               </button>
             </li>
           </ul>
