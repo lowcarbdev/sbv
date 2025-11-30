@@ -3,7 +3,7 @@
 .print-view {
   max-width: 800px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 10px;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
@@ -34,38 +34,38 @@
 }
 
 .print-header {
-  margin-bottom: 2rem;
-  border-bottom: 2px solid #dee2e6;
-  padding-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid #dee2e6;
+  padding-bottom: 0.5rem;
 }
 
 .print-header h1 {
-  font-size: 24px;
-  margin-bottom: 0.5rem;
+  font-size: 18px;
+  margin-bottom: 0.25rem;
   color: #212529;
 }
 
 .print-address {
   color: #6c757d;
-  font-size: 14px;
-  margin-bottom: 0.25rem;
+  font-size: 11px;
+  margin-bottom: 0.125rem;
 }
 
 .print-meta {
   color: #6c757d;
-  font-size: 12px;
+  font-size: 10px;
   margin: 0;
 }
 
 .print-messages {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 0.25rem;
 }
 
 .print-message {
   display: flex;
-  margin-bottom: 8px;
+  margin-bottom: 2px;
 }
 
 .print-message.sent {
@@ -78,9 +78,11 @@
 
 .print-message-bubble {
   max-width: 70%;
-  padding: 10px 14px;
-  border-radius: 12px;
+  padding: 6px 10px;
+  border-radius: 8px;
   word-wrap: break-word;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .print-message.sent .print-message-bubble {
@@ -94,15 +96,15 @@
 }
 
 .print-message-body {
-  margin-bottom: 6px;
+  margin-bottom: 3px;
   white-space: pre-wrap;
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.3;
   color: #212529;
 }
 
 .print-message-media {
-  margin-bottom: 6px;
+  margin-bottom: 3px;
 }
 
 .print-message-media img {
@@ -181,9 +183,9 @@
 }
 
 .print-message-time {
-  font-size: 11px;
+  font-size: 9px;
   color: #6c757d;
-  margin-top: 4px;
+  margin-top: 2px;
   text-align: right;
 }
 
@@ -227,7 +229,7 @@
 
   .print-view {
     max-width: none;
-    padding: 0;
+    padding: 0 0.1in;
   }
 
   .print-header {
@@ -242,8 +244,20 @@
     page-break-inside: avoid;
   }
 
+  .print-message.sent {
+    padding-right: 0.05in;
+  }
+
   @page {
-    margin: 0.5in;
+    margin: 0.4in;
+  }
+
+  .print-messages {
+    gap: 0.1rem;
+  }
+
+  .print-message {
+    margin-bottom: 0px;
   }
 
   /* Ensure good contrast for printing */
