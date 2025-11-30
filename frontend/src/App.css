@@ -118,3 +118,218 @@
     padding: 0.25rem 0.5rem;
   }
 }
+
+/* Print styles for conversation view */
+@media print {
+  /* Hide all UI elements except the conversation content */
+  header,
+  .nav-tabs,
+  .date-filter-container,
+  .conversation-sidebar,
+  button,
+  .btn,
+  input,
+  .form-control,
+  .position-fixed {
+    display: none !important;
+  }
+
+  /* Reset body and root for printing */
+  body,
+  #root {
+    background: white !important;
+    height: auto !important;
+  }
+
+  /* Make message thread container take full page */
+  .message-thread-container {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Thread header - compact and print-friendly */
+  .message-thread-container .bg-light {
+    background: white !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 0.5rem 0 !important;
+    page-break-after: avoid;
+  }
+
+  .thread-header-title {
+    font-size: 1.25rem !important;
+    color: black !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  .badge {
+    background-color: white !important;
+    color: black !important;
+    border: 1px solid black !important;
+    font-size: 0.7rem !important;
+  }
+
+  /* Message content area */
+  .message-thread-container .flex-fill.overflow-auto {
+    overflow: visible !important;
+    height: auto !important;
+    background: white !important;
+    padding: 0 !important;
+  }
+
+  /* Message bubbles - print-friendly styling */
+  .card {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #333 !important;
+    box-shadow: none !important;
+    margin-bottom: 0.5rem !important;
+    padding: 0.25rem 0.5rem !important;
+    page-break-inside: avoid;
+  }
+
+  /* Sent messages - distinguish with border style */
+  .bg-primary.text-white {
+    background: white !important;
+    color: black !important;
+    border: 1px solid #333 !important;
+    border-left: 3px solid #333 !important;
+  }
+
+  /* Received messages */
+  .bg-white {
+    background: white !important;
+    border: 1px solid #999 !important;
+  }
+
+  /* Message body text */
+  .card-body {
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  /* Message timestamp */
+  .text-white-50,
+  .text-muted {
+    color: #666 !important;
+  }
+
+  /* SVG icons in messages */
+  svg {
+    color: #666 !important;
+    stroke: #666 !important;
+  }
+
+  /* Call log items */
+  .bg-light.text-dark.border {
+    background: white !important;
+    border: 1px solid #666 !important;
+    color: black !important;
+  }
+
+  /* Images and media - ensure they're visible and sized appropriately */
+  img {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    display: block !important;
+    margin: 0.25rem 0 !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* Video elements - show poster/thumbnail */
+  video {
+    max-width: 100% !important;
+    height: auto !important;
+    page-break-inside: avoid;
+    display: block !important;
+    margin: 0.25rem 0 !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* LazyMedia wrapper */
+  .lazy-media-wrapper,
+  .img-fluid {
+    max-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure message container doesn't break across pages */
+  .d-flex.justify-content-start,
+  .d-flex.justify-content-end {
+    page-break-inside: avoid;
+    margin-bottom: 0.5rem;
+  }
+
+  /* Audio players - show as a simple text indicator */
+  audio {
+    display: none !important;
+  }
+
+  audio::after {
+    content: "[Audio attachment]";
+    display: block;
+    font-style: italic;
+    color: #666;
+  }
+
+  /* Flex layout adjustments for print */
+  .d-flex {
+    display: block !important;
+  }
+
+  .justify-content-end {
+    text-align: right !important;
+  }
+
+  .justify-content-start {
+    text-align: left !important;
+  }
+
+  .flex-fill {
+    flex: none !important;
+  }
+
+  /* Remove shadows and gradients */
+  .shadow,
+  .shadow-sm {
+    box-shadow: none !important;
+  }
+
+  .bg-gradient {
+    background-image: none !important;
+  }
+
+  /* Sender label for group conversations */
+  .small.text-muted.mb-1 {
+    color: #666 !important;
+    font-size: 0.7rem !important;
+    margin-bottom: 0.1rem !important;
+  }
+
+  /* Phone numbers in header */
+  .thread-header-title + .small.text-muted {
+    color: #666 !important;
+    font-size: 0.8rem !important;
+  }
+
+  /* Compact spacing for print */
+  .gap-1,
+  .gap-2,
+  .gap-3 {
+    gap: 0.25rem !important;
+  }
+
+  /* Page breaks */
+  .message-thread-container > div > div {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure all content is visible */
+  * {
+    overflow: visible !important;
+  }
+}

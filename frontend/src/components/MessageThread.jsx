@@ -11,7 +11,9 @@ function MessageThread({ conversation, startDate, endDate }) {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
   const [highlightedMessageId, setHighlightedMessageId] = useState(null)
+  const [isPreprintingMedia, setIsPreprintingMedia] = useState(false)
   const messageRefs = useRef({})
+  const printTriggeredRef = useRef(false)
 
   useEffect(() => {
     if (conversation) {
@@ -181,6 +183,46 @@ function MessageThread({ conversation, startDate, endDate }) {
     }
   }, [items, location.search])
 
+  // Handle print: load all media before showing print dialog
+  useEffect(() => {
+    const handleBeforePrint = (e) => {
+      // If we're already loading media for print, let it proceed
+      if (printTriggeredRef.current) {
+        return
+      }
+
+      // Prevent default print dialog
+      e.preventDefault()
+      printTriggeredRef.current = true
+      setIsPreprintingMedia(true)
+
+      // Trigger beforeprint event on all LazyMedia components to load them
+      const printEvent = new Event('beforeprint')
+      window.dispatchEvent(printEvent)
+
+      // Wait a bit for all media to start loading, then open print dialog
+      setTimeout(() => {
+        setIsPreprintingMedia(false)
+        printTriggeredRef.current = false
+        window.print()
+      }, 1500) // Give media 1.5 seconds to load
+    }
+
+    const handleKeyDown = (e) => {
+      // Intercept Ctrl+P / Cmd+P
+      if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        e.preventDefault()
+        handleBeforePrint(e)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [])
+
   const fetchItems = async () => {
     setLoading(true)
     try {
@@ -198,6 +240,18 @@ function MessageThread({ conversation, startDate, endDate }) {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleExportPDF = () => {
+    // Build URL parameters for print view
+    const params = new URLSearchParams()
+    if (startDate) params.set('start', startDate.toISOString())
+    if (endDate) params.set('end', endDate.toISOString())
+
+    // Open print view in new window
+    const queryString = params.toString()
+    const printUrl = `/conversation/${encodeURIComponent(conversation.address)}/print${queryString ? '?' + queryString : ''}`
+    window.open(printUrl, '_blank', 'width=1024,height=768')
   }
 
   const formatTime = (date) => {
@@ -349,6 +403,25 @@ function MessageThread({ conversation, startDate, endDate }) {
 
   return (
     <div className="d-flex flex-column h-100">
+      {/* Print preparation overlay */}
+      {isPreprintingMedia && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+          style={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            zIndex: 10000
+          }}
+        >
+          <div className="text-center">
+            <div className="spinner-border text-primary mb-3" role="status" style={{width: '3rem', height: '3rem'}}>
+              <span className="visually-hidden">Loading media...</span>
+            </div>
+            <p className="h5 text-dark">Preparing conversation for printing...</p>
+            <p className="text-muted small">Loading all images and media</p>
+          </div>
+        </div>
+      )}
+
       {/* Thread Header */}
       <div className="bg-light border-bottom p-2 p-md-4 shadow-sm">
         <div className="d-flex align-items-center gap-2 gap-md-3">
@@ -385,11 +458,23 @@ function MessageThread({ conversation, startDate, endDate }) {
                 </div>
               )
             })()}
-            <div>
+            <div className="d-flex align-items-center gap-2">
               <span className="badge bg-primary" style={{fontSize: '0.7rem'}}>
                 {items.length} {isCallLog ? 'call' : 'message'}{items.length !== 1 ? 's' : ''}
               </span>
             </div>
+          </div>
+          <div>
+            <button
+              onClick={handleExportPDF}
+              className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
+              title="Export as PDF"
+            >
+              <svg style={{width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <span className="d-none d-md-inline">Export PDF</span>
+            </button>
           </div>
         </div>
       </div>

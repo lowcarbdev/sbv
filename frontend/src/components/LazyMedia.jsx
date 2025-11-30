@@ -41,10 +41,21 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
       observerRef.current.observe(imgRef.current)
     }
 
+    // Load media before printing to ensure all images are available
+    const handleBeforePrint = () => {
+      if (!hasLoadedRef.current) {
+        hasLoadedRef.current = true
+        loadMedia()
+      }
+    }
+
+    window.addEventListener('beforeprint', handleBeforePrint)
+
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect()
       }
+      window.removeEventListener('beforeprint', handleBeforePrint)
     }
   }, [messageId])
 

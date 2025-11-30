@@ -7,6 +7,7 @@ import './index.css'
 import { AuthProvider } from './contexts/AuthContext'
 import App from './App.jsx'
 import Login from './components/Login.jsx'
+import PrintView from './components/PrintView.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 
 // Configure axios to include credentials with all requests
@@ -18,6 +19,11 @@ createRoot(document.getElementById('root')).render(
       <AuthProvider>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/conversation/:address/print" element={
+            <ProtectedRoute>
+              <PrintView />
+            </ProtectedRoute>
+          } />
           <Route path="/*" element={
             <ProtectedRoute>
               <App />
