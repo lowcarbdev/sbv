@@ -56,13 +56,15 @@ function PrintView() {
       setMessages(items)
       console.log('Messages state set')
 
-      // Get contact name from any message in the list (they should all have the same contact_name)
-      const contactName = items.find(item => item.contact_name)?.contact_name || address
-      console.log('Contact name:', contactName)
+      // Get contact name and subject from any item in the list
+      const contactName = items.find(item => item.contact_name)?.contact_name
+      const subject = items.find(item => item.subject)?.subject
+      console.log('Contact name:', contactName, 'Subject:', subject)
 
       setConversation({
         address,
-        contactName
+        contactName,
+        subject
       })
 
       // Count total media items - need to check nested message for media_type
@@ -149,6 +151,66 @@ function PrintView() {
     }
   }
 
+  const formatSinglePhoneNumber = (number) => {
+    if (!number) return 'Unknown'
+
+    // Remove all non-digit characters
+    const cleaned = number.replace(/\D/g, '')
+
+    // Handle 11-digit numbers (e.g., +1 country code)
+    if (cleaned.length === 11 && cleaned.startsWith('1')) {
+      const areaCode = cleaned.slice(1, 4)
+      const firstPart = cleaned.slice(4, 7)
+      const secondPart = cleaned.slice(7, 11)
+      return `+1 (${areaCode}) ${firstPart}-${secondPart}`
+    }
+
+    // Handle 10-digit numbers
+    if (cleaned.length === 10) {
+      const areaCode = cleaned.slice(0, 3)
+      const firstPart = cleaned.slice(3, 6)
+      const secondPart = cleaned.slice(6, 10)
+      return `(${areaCode}) ${firstPart}-${secondPart}`
+    }
+
+    // Return as-is if format doesn't match
+    return number
+  }
+
+  const formatPhoneNumber = (number) => {
+    if (!number) return 'Unknown'
+
+    // Handle comma-separated numbers (group conversations)
+    if (number.includes(',')) {
+      const numbers = number.split(',').map(n => n.trim())
+      return numbers.map(n => formatSinglePhoneNumber(n)).join(', ')
+    }
+
+    return formatSinglePhoneNumber(number)
+  }
+
+  const shouldDisplaySubject = (subject) => {
+    if (!subject) return false
+    // Filter out subjects that are just "Message" or look auto-generated
+    const lowerSubject = subject.toLowerCase()
+    if (lowerSubject === 'message' || lowerSubject === 'no subject') return false
+    return true
+  }
+
+  const getDisplayName = (conv) => {
+    // If we have a valid subject, use it when contact_name is empty, "(Unknown)", or looks like an 8-digit number
+    if (conv.subject && shouldDisplaySubject(conv.subject)) {
+      if (!conv.contactName || conv.contactName === '(Unknown)' || /^\d{8}$/.test(conv.contactName)) {
+        return conv.subject
+      }
+    }
+    // If contact_name is empty, null, or "(Unknown)", use formatted phone number
+    if (!conv.contactName || conv.contactName === '(Unknown)') {
+      return formatPhoneNumber(conv.address)
+    }
+    return conv.contactName
+  }
+
   const formatDuration = (seconds) => {
     const mins = Math.floor(seconds / 60)
     const secs = seconds % 60
@@ -227,20 +289,32 @@ function PrintView() {
           {message.media_type && (
             <div className="print-message-media">
               {message.media_type.startsWith('image/') && (
-                <img
-                  src={`${API_BASE}/media?id=${message.id}`}
-                  alt="Message attachment"
-                  onLoad={() => console.log(`Image ${message.id} loaded`)}
-                  onError={(e) => console.log(`Image ${message.id} failed to load:`, e)}
-                />
+                <div className={message.media_type === 'image/gif' ? 'print-gif-container' : ''}>
+                  <img
+                    src={`${API_BASE}/media?id=${message.id}`}
+                    alt="Message attachment"
+                    onLoad={() => console.log(`Image ${message.id} loaded`)}
+                    onError={(e) => console.log(`Image ${message.id} failed to load:`, e)}
+                  />
+                  {message.media_type === 'image/gif' && (
+                    <div className="print-gif-overlay">
+                      <div className="print-gif-label">GIF (First Frame)</div>
+                    </div>
+                  )}
+                </div>
               )}
               {message.media_type.startsWith('video/') && (
-                <video
-                  src={`${API_BASE}/media?id=${message.id}`}
-                  controls
-                  onLoadedData={() => console.log(`Video ${message.id} loaded`)}
-                  onError={(e) => console.log(`Video ${message.id} failed to load:`, e)}
-                />
+                <div className="print-video-container">
+                  <video
+                    src={`${API_BASE}/media?id=${message.id}`}
+                    onLoadedData={() => console.log(`Video ${message.id} loaded`)}
+                    onError={(e) => console.log(`Video ${message.id} failed to load:`, e)}
+                    preload="metadata"
+                  />
+                  <div className="print-video-overlay">
+                    <div className="print-video-label">Video (First Frame)</div>
+                  </div>
+                </div>
               )}
               {message.media_type.startsWith('audio/') && (
                 <div className="print-media-placeholder">
@@ -296,8 +370,8 @@ function PrintView() {
       )}
 
       <div className="print-header">
-        <h1>Conversation with {conversation?.contactName}</h1>
-        <p className="print-address">{conversation?.address}</p>
+        <h1>Conversation with {conversation ? getDisplayName(conversation) : ''}</h1>
+        <p className="print-address">{formatPhoneNumber(conversation?.address || '')}</p>
         <p className="print-meta">
           {messages.length} items
           {' • '}
