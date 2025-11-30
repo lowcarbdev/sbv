@@ -11,6 +11,7 @@ import DateFilter from './components/DateFilter'
 import Upload from './components/Upload'
 import Search from './components/Search'
 import ChangePasswordModal from './components/ChangePasswordModal'
+import SettingsModal from './components/SettingsModal'
 import './App.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
@@ -27,8 +28,14 @@ function App() {
   const [dateRange, setDateRange] = useState({ min: null, max: null })
   const [showUpload, setShowUpload] = useState(false)
   const [showPasswordModal, setShowPasswordModal] = useState(false)
+  const [showSettingsModal, setShowSettingsModal] = useState(false)
   const [searchFilter, setSearchFilter] = useState('')
   const [version, setVersion] = useState('...')
+  const [settings, setSettings] = useState({
+    conversations: {
+      show_calls: true
+    }
+  })
 
   // Mobile sidebar state
   const [showSidebar, setShowSidebar] = useState(true)
@@ -50,10 +57,15 @@ function App() {
     : 'conversations'
 
   useEffect(() => {
+    fetchSettings()
     fetchDateRange()
-    fetchConversations()
     fetchVersion()
   }, [])
+
+  useEffect(() => {
+    // Fetch conversations after settings are loaded
+    fetchConversations()
+  }, [startDate, endDate, settings])
 
   const fetchVersion = async () => {
     try {
@@ -65,9 +77,20 @@ function App() {
     }
   }
 
-  useEffect(() => {
-    fetchConversations()
-  }, [startDate, endDate])
+  const fetchSettings = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/settings`)
+      setSettings(response.data)
+    } catch (error) {
+      console.error('Failed to fetch settings:', error)
+      // Use default settings if fetch fails
+      setSettings({
+        conversations: {
+          show_calls: true
+        }
+      })
+    }
+  }
 
   // Sync selected conversation from URL and manage sidebar visibility
   useEffect(() => {
@@ -112,7 +135,9 @@ function App() {
       if (endDate) params.end = endDate.toISOString()
 
       const response = await axios.get(`${API_BASE}/conversations`, { params })
-      setConversations(response.data || [])
+      const conversationList = response.data || []
+
+      setConversations(conversationList)
     } catch (error) {
       console.error('Error fetching conversations:', error)
     } finally {
@@ -197,6 +222,13 @@ function App() {
                   Version {version}
                 </Dropdown.ItemText>
                 <Dropdown.Divider />
+                <Dropdown.Item onClick={() => setShowSettingsModal(true)}>
+                  <svg style={{width: '1rem', height: '1rem'}} className="me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Settings
+                </Dropdown.Item>
                 <Dropdown.Item onClick={() => setShowPasswordModal(true)}>
                   <svg style={{width: '1rem', height: '1rem'}} className="me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -370,6 +402,17 @@ function App() {
         />
       )}
 
+      {/* Settings Modal */}
+      <SettingsModal
+        show={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onSettingsUpdated={(newSettings) => {
+          setSettings(newSettings)
+          // Reload conversations if show_calls setting changed
+          fetchConversations()
+        }}
+      />
+
       {/* Change Password Modal */}
       {showPasswordModal && (
         <ChangePasswordModal
@@ -380,6 +423,17 @@ function App() {
           }}
         />
       )}
+
+      {/* Settings Modal */}
+      <SettingsModal
+        show={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
+        onSettingsUpdated={(newSettings) => {
+          setSettings(newSettings)
+          // Reload conversations if show_calls setting changed
+          fetchConversations()
+        }}
+      />
     </div>
   )
 }

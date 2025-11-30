@@ -74,6 +74,8 @@ func main() {
 	protected.GET("/progress", internal.HandleProgress)
 	protected.GET("/media", internal.HandleMedia)
 	protected.GET("/search", internal.HandleSearch)
+	protected.GET("/settings", internal.HandleGetSettings)
+	protected.PUT("/settings", internal.HandleUpdateSettings)
 
 	// Health check
 	e.GET("/api/health", func(c echo.Context) error {

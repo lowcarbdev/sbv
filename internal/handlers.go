@@ -191,6 +191,22 @@ func HandleMessages(c echo.Context) error {
 			}
 		}
 
+		// Get user ID from context to fetch settings
+		userID, ok := c.Get("user_id").(string)
+		if !ok {
+			return c.JSON(http.StatusUnauthorized, map[string]string{
+				"error": "User not authenticated",
+			})
+		}
+
+		// Fetch user settings to check if calls should be shown
+		settings, err := GetUserSettings(userID)
+		if err != nil {
+			slog.Error("Error getting user settings", "error", err)
+			// If we can't get settings, default to showing calls
+			settings = GetDefaultSettings()
+		}
+
 		activities, err := GetActivityByAddress(userDB, address, startDate, endDate, limit, offset)
 		if err != nil {
 			slog.Error("Error getting activity", "error", err)
@@ -198,6 +214,18 @@ func HandleMessages(c echo.Context) error {
 				"error": "Failed to get activity",
 			})
 		}
+
+		// Filter out calls if show_calls setting is false
+		if !settings.Conversations.ShowCalls {
+			filteredActivities := []ActivityItem{}
+			for _, activity := range activities {
+				if activity.Type != "call" {
+					filteredActivities = append(filteredActivities, activity)
+				}
+			}
+			activities = filteredActivities
+		}
+
 		return c.JSON(http.StatusOK, activities)
 	}
 
