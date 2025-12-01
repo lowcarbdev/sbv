@@ -46,6 +46,7 @@ services:
 - **Full-text search** - Find what you want fast.
 - **Activity view** - See it as it happened.
 - **vCard preview** - Preview the contents of contact cards (vCards)
+- **Mobile view** - UI works on both desktop and mobile
 
 ## Tech Stack
 
@@ -95,7 +96,15 @@ SMS Backup & Restore creates two separate backup files, beginning with `calls-` 
 
 Q: Can I save just the sqlite db and delete the XML files?
 
-The sqlite database doesn't retain all information that is produced by the XML file. It is recommended to retain the XML file as your backup, then import into this app as needed.
+The sqlite database doesn't save all information that is produced by the XML file. It is recommended to retain the XML file as your backup, then import into this app as needed.
+
+Q: Does this app keep my messages private?
+
+SBV keeps your messages 100% private. SBV does not send any telemetry. SBV does not communicate with remote servers at all. It is highly recommended to use a strong password to secure access to your data.
+
+Do not expose SBV directly to the internet. While SBV is secure, that's just asking for trouble.
+
+Because SBV gathers no telemetry, please star the project on github to show your support.
 
 ## Known Issues
 
