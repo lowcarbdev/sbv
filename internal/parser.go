@@ -1,6 +1,5 @@
 package internal
 
-
 import (
 	"bytes"
 	"database/sql"
@@ -440,10 +439,10 @@ func isHEICContentType(contentType string) bool {
 // needsVideoConversion checks if a video format needs conversion for browser compatibility
 func needsVideoConversion(contentType string) bool {
 	ct := strings.ToLower(strings.TrimSpace(contentType))
-	// 3GP, 3G2, and other old mobile formats that browsers don't support
 	unsupportedFormats := []string{
 		"3gpp", "3gp", "3g2", "3gpp2",
 		"video/3gpp", "video/3gp", "video/3gpp2", "video/3g2",
+		"video/x-matroska", // MKV container (may have various codecs)
 	}
 
 	for _, format := range unsupportedFormats {

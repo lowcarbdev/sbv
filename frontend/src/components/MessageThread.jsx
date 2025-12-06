@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { format } from 'date-fns'
 import LazyMedia from './LazyMedia'
+import MediaGrid from './MediaGrid'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
 
@@ -12,12 +13,14 @@ function MessageThread({ conversation, startDate, endDate }) {
   const [loading, setLoading] = useState(false)
   const [highlightedMessageId, setHighlightedMessageId] = useState(null)
   const [isPreprintingMedia, setIsPreprintingMedia] = useState(false)
+  const [showMediaOnly, setShowMediaOnly] = useState(false)
   const messageRefs = useRef({})
   const printTriggeredRef = useRef(false)
 
   useEffect(() => {
     if (conversation) {
       fetchItems()
+      setShowMediaOnly(false) // Reset to message view when conversation changes
     } else {
       setItems([])
     }
@@ -464,7 +467,17 @@ function MessageThread({ conversation, startDate, endDate }) {
               </span>
             </div>
           </div>
-          <div>
+          <div className="d-flex gap-2">
+            <button
+              onClick={() => setShowMediaOnly(!showMediaOnly)}
+              className={`btn btn-sm ${showMediaOnly ? 'btn-primary' : 'btn-outline-primary'} d-flex align-items-center gap-1`}
+              title={showMediaOnly ? "Show all messages" : "Show photos only"}
+            >
+              <svg style={{width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <span className="d-none d-md-inline">{showMediaOnly ? 'Show All' : 'Photos'}</span>
+            </button>
             <button
               onClick={handleExportPDF}
               className="btn btn-sm btn-outline-primary d-flex align-items-center gap-1"
@@ -481,7 +494,10 @@ function MessageThread({ conversation, startDate, endDate }) {
 
       {/* Content */}
       <div className="flex-fill overflow-auto p-2 p-md-4 bg-light">
-        {isCallLog ? (
+        {showMediaOnly && !isCallLog ? (
+          // Media Grid View
+          <MediaGrid conversation={conversation} startDate={startDate} endDate={endDate} />
+        ) : isCallLog ? (
           // Call Log View
           <div className="d-flex flex-column gap-3">
             {items.map((call) => {

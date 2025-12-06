@@ -824,6 +824,61 @@ func GetActivityByAddress(userDB *sql.DB, address string, startDate, endDate *ti
 	return activities, nil
 }
 
+// GetMediaByAddress fetches only media items (images/videos) for a specific address
+func GetMediaByAddress(userDB *sql.DB, address string, startDate, endDate *time.Time) ([]Message, error) {
+	query := `
+		SELECT id, address, COALESCE(body, '') as body, date,
+		       COALESCE(contact_name, '') as contact_name, COALESCE(media_type, '') as media_type,
+		       read, thread_id
+		FROM messages
+		WHERE record_type IN (1, 2)
+		AND media_type IS NOT NULL
+		AND media_type != ''
+		AND (media_type LIKE 'image/%' OR media_type LIKE 'video/%')
+	`
+
+	args := []interface{}{}
+	if address != "" {
+		query += " AND address = ?"
+		args = append(args, address)
+	}
+	if startDate != nil {
+		query += " AND date >= ?"
+		args = append(args, startDate.Unix())
+	}
+	if endDate != nil {
+		query += " AND date <= ?"
+		args = append(args, endDate.Unix())
+	}
+
+	query += " ORDER BY date DESC"
+
+	rows, err := userDB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var mediaItems []Message
+	for rows.Next() {
+		var m Message
+		var dateUnix int64
+		var readInt int64
+
+		err := rows.Scan(&m.ID, &m.Address, &m.Body, &dateUnix, &m.ContactName, &m.MediaType, &readInt, &m.ThreadID)
+		if err != nil {
+			return nil, err
+		}
+
+		m.Date = time.Unix(dateUnix, 0)
+		m.Read = readInt == 1
+
+		mediaItems = append(mediaItems, m)
+	}
+
+	return mediaItems, nil
+}
+
 func GetMessageMedia(userDB *sql.DB, messageID string) ([]byte, string, error) {
 	query := `
 		SELECT COALESCE(media_data, ''), COALESCE(media_type, '')

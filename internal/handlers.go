@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -240,6 +241,44 @@ func HandleMessages(c echo.Context) error {
 	return c.JSON(http.StatusOK, messages)
 }
 
+// HandleMediaItems returns only media (images/videos) for a conversation
+func HandleMediaItems(c echo.Context) error {
+	userDB, err := getUserDB(c)
+	if err != nil {
+		slog.Error("Error getting user database", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to get user database",
+		})
+	}
+
+	address := c.QueryParam("address")
+	var startDate, endDate *time.Time
+
+	if startStr := c.QueryParam("start"); startStr != "" {
+		t, err := time.Parse(time.RFC3339, startStr)
+		if err == nil {
+			startDate = &t
+		}
+	}
+
+	if endStr := c.QueryParam("end"); endStr != "" {
+		t, err := time.Parse(time.RFC3339, endStr)
+		if err == nil {
+			endDate = &t
+		}
+	}
+
+	mediaItems, err := GetMediaByAddress(userDB, address, startDate, endDate)
+	if err != nil {
+		slog.Error("Error getting media items", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Failed to get media items",
+		})
+	}
+
+	return c.JSON(http.StatusOK, mediaItems)
+}
+
 func HandleActivity(c echo.Context) error {
 	userDB, err := getUserDB(c)
 	if err != nil {
@@ -395,6 +434,9 @@ func HandleMedia(c echo.Context) error {
 		})
 	}
 
+	// Check if transcode is requested (for videos that browser can't play)
+	forceTranscode := c.QueryParam("transcode") == "true"
+
 	// Fetch media from database
 	media, contentType, err := GetMessageMedia(userDB, messageID)
 	if err != nil {
@@ -410,11 +452,68 @@ func HandleMedia(c echo.Context) error {
 		})
 	}
 
+	// If transcode is requested and this is a video, try to convert it
+	if forceTranscode && strings.HasPrefix(contentType, "video/") {
+		slog.Info("Transcode requested for video", "messageID", messageID, "contentType", contentType)
+		convertedData, err := convertVideoToMP4(media)
+		if err != nil {
+			slog.Error("Failed to transcode video", "messageID", messageID, "error", err)
+			// Continue with original video if conversion fails
+		} else {
+			slog.Info("Successfully transcoded video", "messageID", messageID)
+			media = convertedData
+			contentType = "video/mp4"
+		}
+	}
+
+	slog.Debug("Serving media", "messageID", messageID, "contentType", contentType, "size", len(media))
+
 	// Set appropriate headers
 	c.Response().Header().Set("Cache-Control", "public, max-age=31536000") // Cache for 1 year
-	c.Response().Header().Set("Content-Length", fmt.Sprintf("%d", len(media)))
+	c.Response().Header().Set("Accept-Ranges", "bytes")                    // Enable range requests for video streaming
 
-	// Write binary data with proper content type
+	// Check for Range header (needed for video playback)
+	rangeHeader := c.Request().Header.Get("Range")
+	if rangeHeader != "" {
+		contentLength := int64(len(media))
+		var start, end int64 = 0, contentLength - 1
+
+		slog.Debug("Range request received", "messageID", messageID, "range", rangeHeader, "contentType", contentType, "contentLength", contentLength)
+
+		// Parse range header (e.g., "bytes=0-1023" or "bytes=0-")
+		n, _ := fmt.Sscanf(rangeHeader, "bytes=%d-%d", &start, &end)
+		if n == 1 {
+			// Only start was specified (e.g., "bytes=0-")
+			end = contentLength - 1
+		} else if n == 0 {
+			// Invalid range, return 416 Range Not Satisfiable
+			slog.Warn("Invalid range header", "range", rangeHeader)
+			c.Response().Header().Set("Content-Range", fmt.Sprintf("bytes */%d", contentLength))
+			return c.NoContent(http.StatusRequestedRangeNotSatisfiable)
+		}
+
+		// Ensure valid range
+		if start < 0 || start >= contentLength || end >= contentLength || start > end {
+			slog.Warn("Range out of bounds", "start", start, "end", end, "contentLength", contentLength)
+			c.Response().Header().Set("Content-Range", fmt.Sprintf("bytes */%d", contentLength))
+			return c.NoContent(http.StatusRequestedRangeNotSatisfiable)
+		}
+
+		slog.Debug("Serving range", "start", start, "end", end, "size", end-start+1)
+
+		// Set response headers for partial content
+		c.Response().Header().Set("Content-Type", contentType)
+		c.Response().Header().Set("Content-Range", fmt.Sprintf("bytes %d-%d/%d", start, end, contentLength))
+		c.Response().Header().Set("Content-Length", fmt.Sprintf("%d", end-start+1))
+		c.Response().WriteHeader(http.StatusPartialContent)
+
+		// Write the requested range
+		_, writeErr := c.Response().Write(media[start : end+1])
+		return writeErr
+	}
+
+	// No range request - serve full content
+	c.Response().Header().Set("Content-Length", fmt.Sprintf("%d", len(media)))
 	return c.Blob(http.StatusOK, contentType, media)
 }
 
