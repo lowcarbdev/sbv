@@ -80,33 +80,14 @@ MIT
 - Please submit any issues to github issues
 - PRs are welcome, but for anything over ~100 lines, please submit a github discussion first
 
+## Administration
+
+See [docs/ADMIN.md](docs/ADMIN.md) for administrative tasks including:
+- Listing users
+- Resetting passwords
+- Auto-importing backups via the filesystem
+
 ## FAQ
-
-Q: How do I list all users?
-
-Docker:
-```bash
-docker exec -it <container_name> /app/sbv -list-users
-```
-
-Binary:
-```bash
-./sbv -list-users
-```
-
-Q: How do I reset a user's password?
-
-Docker:
-```bash
-docker exec -it <container_name> /app/sbv -reset-password <username>
-```
-
-Binary:
-```bash
-./sbv -reset-password <username>
-```
-
-You will be prompted to enter and confirm the new password.
 
 Q: What backups does this program support?
 
