@@ -112,6 +112,19 @@ func VerifyPassword(user *User, password string) bool {
 	return err == nil
 }
 
+// GetUsernameByID retrieves username by user ID
+func GetUsernameByID(userID string) (string, error) {
+	var username string
+	err := authDB.QueryRow("SELECT username FROM users WHERE id = ?", userID).Scan(&username)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return "", fmt.Errorf("user not found")
+		}
+		return "", err
+	}
+	return username, nil
+}
+
 // GenerateSessionID generates a random session ID
 func GenerateSessionID() (string, error) {
 	bytes := make([]byte, 32)

@@ -9,6 +9,7 @@ require (
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/strukturag/libheif-go v0.0.0-20250130134905-55b3482bea15
 	golang.org/x/crypto v0.44.0
+	golang.org/x/term v0.39.0
 )
 
 require (
@@ -18,7 +19,7 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/net v0.47.0 // indirect
-	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 )

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"flag"
+	"fmt"
 	"log/slog"
 	"net/http"
 	_ "net/http/pprof"
@@ -10,11 +12,16 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/lowcarbdev/sbv/internal"
+	"golang.org/x/term"
 )
 
 var logger *slog.Logger
 
 func main() {
+	// Parse CLI flags
+	resetPassword := flag.String("reset-password", "", "Reset password for the specified username")
+	flag.Parse()
+
 	// Initialize slog logger
 	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		Level: slog.LevelInfo,
@@ -34,6 +41,15 @@ func main() {
 		os.Exit(1)
 	}
 	logger.Info("Authentication database initialized", "path", authDBPath)
+
+	// Handle password reset if requested
+	if *resetPassword != "" {
+		if err := handleResetPassword(*resetPassword); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
 
 	// Create Echo instance
 	e := echo.New()
@@ -144,4 +160,46 @@ func main() {
 		logger.Error("Server failed to start", "error", err)
 		os.Exit(1)
 	}
+}
+
+// handleResetPassword prompts for a new password and resets it for the given username
+func handleResetPassword(username string) error {
+	// Look up the user
+	user, err := internal.GetUserByUsername(username)
+	if err != nil {
+		return fmt.Errorf("user '%s' not found", username)
+	}
+
+	// Prompt for new password
+	fmt.Print("Enter new password: ")
+	passwordBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println()
+	if err != nil {
+		return fmt.Errorf("failed to read password: %w", err)
+	}
+
+	// Prompt for password confirmation
+	fmt.Print("Confirm new password: ")
+	confirmBytes, err := term.ReadPassword(int(os.Stdin.Fd()))
+	fmt.Println()
+	if err != nil {
+		return fmt.Errorf("failed to read password confirmation: %w", err)
+	}
+
+	password := string(passwordBytes)
+	if password != string(confirmBytes) {
+		return fmt.Errorf("passwords do not match")
+	}
+
+	if len(password) < 6 {
+		return fmt.Errorf("password must be at least 6 characters")
+	}
+
+	// Update the password
+	if err := internal.UpdatePassword(user.ID, password); err != nil {
+		return fmt.Errorf("failed to update password: %w", err)
+	}
+
+	fmt.Printf("Password reset successfully for user '%s'\n", username)
+	return nil
 }
