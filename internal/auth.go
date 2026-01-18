@@ -223,3 +223,29 @@ func UpdatePassword(userID string, newPassword string) error {
 
 	return nil
 }
+
+// ListUsers returns all users in the database
+func ListUsers() ([]User, error) {
+	rows, err := authDB.Query("SELECT id, username, password_hash, created_at FROM users ORDER BY username")
+	if err != nil {
+		return nil, fmt.Errorf("failed to query users: %w", err)
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		var createdAt int64
+		if err := rows.Scan(&user.ID, &user.Username, &user.PasswordHash, &createdAt); err != nil {
+			return nil, fmt.Errorf("failed to scan user: %w", err)
+		}
+		user.CreatedAt = time.Unix(createdAt, 0)
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("error iterating users: %w", err)
+	}
+
+	return users, nil
+}

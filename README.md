@@ -82,6 +82,32 @@ MIT
 
 ## FAQ
 
+Q: How do I list all users?
+
+Docker:
+```bash
+docker exec -it <container_name> /app/sbv -list-users
+```
+
+Binary:
+```bash
+./sbv -list-users
+```
+
+Q: How do I reset a user's password?
+
+Docker:
+```bash
+docker exec -it <container_name> /app/sbv -reset-password <username>
+```
+
+Binary:
+```bash
+./sbv -reset-password <username>
+```
+
+You will be prompted to enter and confirm the new password.
+
 Q: What backups does this program support?
 
 XML backups from the [SMS Backup & Restore app](https://play.google.com/store/apps/details?id=com.riteshsahu.SMSBackupRestore&hl=en_US). Android devices are supported. iPhone (iOS) devices are not supported by SMS Backup & Restore.

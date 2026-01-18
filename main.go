@@ -7,6 +7,8 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"os"
+	"path/filepath"
+	"text/tabwriter"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -20,6 +22,7 @@ var logger *slog.Logger
 func main() {
 	// Parse CLI flags
 	resetPassword := flag.String("reset-password", "", "Reset password for the specified username")
+	listUsers := flag.Bool("list-users", false, "List all users")
 	flag.Parse()
 
 	// Initialize slog logger
@@ -45,6 +48,15 @@ func main() {
 	// Handle password reset if requested
 	if *resetPassword != "" {
 		if err := handleResetPassword(*resetPassword); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		os.Exit(0)
+	}
+
+	// Handle list users if requested
+	if *listUsers {
+		if err := handleListUsers(dbPathPrefix); err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(1)
 		}
@@ -207,5 +219,30 @@ func handleResetPassword(username string) error {
 	}
 
 	fmt.Printf("Password reset successfully for user '%s'\n", username)
+	return nil
+}
+
+// handleListUsers lists all users with their usernames, UUIDs, and ingest directories
+func handleListUsers(dbPathPrefix string) error {
+	users, err := internal.ListUsers()
+	if err != nil {
+		return fmt.Errorf("failed to list users: %w", err)
+	}
+
+	if len(users) == 0 {
+		fmt.Println("No users found.")
+		return nil
+	}
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+	fmt.Fprintln(w, "USERNAME\tUUID\tINGEST DIRECTORY")
+	fmt.Fprintln(w, "--------\t----\t----------------")
+
+	for _, user := range users {
+		ingestDir := filepath.Join(dbPathPrefix, "data", user.ID, "ingest")
+		fmt.Fprintf(w, "%s\t%s\t%s\n", user.Username, user.ID, ingestDir)
+	}
+
+	w.Flush()
 	return nil
 }
