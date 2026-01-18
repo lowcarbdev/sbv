@@ -123,6 +123,12 @@ func main() {
 		logger.Info("Serving static files from ./frontend/dist with SPA routing support")
 	}
 
+	// Start auto-import service
+	dataDir := dbPathPrefix + "/data"
+	autoImportService := internal.NewAutoImportService(dataDir)
+	autoImportService.Start()
+	defer autoImportService.Stop()
+
 	// Start pprof server in a separate goroutine for profiling
 	go func() {
 		port := os.Getenv("PORT")
