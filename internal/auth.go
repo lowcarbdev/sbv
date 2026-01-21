@@ -25,6 +25,20 @@ func InitAuthDB(filepath string) error {
 		return err
 	}
 
+	// Set busy timeout for better concurrent access
+	_, err = authDB.Exec("PRAGMA busy_timeout=5000;")
+	if err != nil {
+		return fmt.Errorf("failed to set busy timeout: %w", err)
+	}
+
+	// Enable WAL mode if requested (better for concurrent reads during writes)
+	if UseWALMode {
+		_, err = authDB.Exec("PRAGMA journal_mode=WAL;")
+		if err != nil {
+			return fmt.Errorf("failed to enable WAL mode: %w", err)
+		}
+	}
+
 	createTableSQL := `
 	CREATE TABLE IF NOT EXISTS users (
 		id TEXT PRIMARY KEY,

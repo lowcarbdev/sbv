@@ -23,7 +23,11 @@ func main() {
 	// Parse CLI flags
 	resetPassword := flag.String("reset-password", "", "Reset password for the specified username")
 	listUsers := flag.Bool("list-users", false, "List all users")
+	journalMode := flag.Bool("journal", false, "Use rollback journal mode instead of WAL (for network filesystems)")
 	flag.Parse()
+
+	// Use WAL mode by default, unless -journal flag is set
+	internal.UseWALMode = !*journalMode
 
 	// Initialize slog logger
 	logger = slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{

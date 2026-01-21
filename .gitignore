@@ -1,6 +1,8 @@
 # Backend
 tmp/
 *.db
+*.db-shm
+*.db-wal
 messages.db
 build-errors.log
 sbv

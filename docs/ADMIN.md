@@ -2,6 +2,30 @@
 
 This guide covers administrative features in SBV.
 
+## Database Journal Mode
+
+SBV uses SQLite with WAL (Write-Ahead Logging) mode by default. WAL mode provides better concurrent access, allowing you to browse messages while imports are running.
+
+If your data directory is on a network filesystem (NFS, SMB/CIFS), WAL mode may not work correctly. In this case, use the `-journal` flag to switch to rollback journal mode:
+
+Docker:
+```bash
+docker run ... ghcr.io/lowcarbdev/sbv:stable ./sbv -journal
+```
+
+Binary:
+```bash
+./sbv -journal
+```
+
+Docker Compose:
+```yaml
+services:
+  sbv:
+    image: ghcr.io/lowcarbdev/sbv:stable
+    command: ["./sbv", "-journal"]
+```
+
 ## User Management
 
 ### List All Users

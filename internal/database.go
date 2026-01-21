@@ -19,6 +19,9 @@ var db *sql.DB
 var userDBs = make(map[string]*sql.DB)
 var userDBsMutex sync.RWMutex
 
+// UseWALMode controls whether WAL journal mode is enabled for databases
+var UseWALMode bool
+
 // truncateString truncates a string to maxLen characters for logging
 func truncateString(s string, maxLen int) string {
 	if len(s) <= maxLen {
@@ -56,6 +59,20 @@ func InitDB(filepath string) error {
 
 	if err = db.Ping(); err != nil {
 		return err
+	}
+
+	// Set busy timeout for better concurrent access
+	_, err = db.Exec("PRAGMA busy_timeout=5000;")
+	if err != nil {
+		return fmt.Errorf("failed to set busy timeout: %w", err)
+	}
+
+	// Enable WAL mode if requested (better for concurrent reads during writes)
+	if UseWALMode {
+		_, err = db.Exec("PRAGMA journal_mode=WAL;")
+		if err != nil {
+			return fmt.Errorf("failed to enable WAL mode: %w", err)
+		}
 	}
 
 	createTableSQL := `
@@ -152,6 +169,20 @@ func InitUserDB(userID string, filepath string) error {
 		return err
 	}
 
+	// Set busy timeout for better concurrent access
+	_, err = userDB.Exec("PRAGMA busy_timeout=5000;")
+	if err != nil {
+		return fmt.Errorf("failed to set busy timeout: %w", err)
+	}
+
+	// Enable WAL mode if requested (better for concurrent reads during writes)
+	if UseWALMode {
+		_, err = userDB.Exec("PRAGMA journal_mode=WAL;")
+		if err != nil {
+			return fmt.Errorf("failed to enable WAL mode: %w", err)
+		}
+	}
+
 	createTableSQL := `
 	-- Unified table for SMS messages, MMS messages, and call logs
 	-- record_type: 1 = SMS, 2 = MMS, 3 = call
@@ -237,32 +268,29 @@ func InitUserDB(userID string, filepath string) error {
 	return nil
 }
 
-// GetUserDB retrieves the database connection for a specific user
+// GetUserDB retrieves the database connection for a specific user, creating it if it doesn't exist
 func GetUserDB(userID string, username string) (*sql.DB, error) {
 	userDBsMutex.RLock()
-	defer userDBsMutex.RUnlock()
-
 	userDB, exists := userDBs[userID]
+	userDBsMutex.RUnlock()
+
 	if !exists {
-		// Try to open the database if it exists
+		// Database not in cache, try to open or create it
 		dbPathPrefix := os.Getenv("DB_PATH_PREFIX")
 		if dbPathPrefix == "" {
 			dbPathPrefix = "."
 		}
 		// Use UUID as database filename instead of sanitized username
 		filepath := fmt.Sprintf("%s/sbv_%s.db", dbPathPrefix, userID)
-		if _, err := os.Stat(filepath); err == nil {
-			// Database file exists, try to open it
-			userDBsMutex.RUnlock()
-			if err := InitUserDB(userID, filepath); err != nil {
-				userDBsMutex.RLock()
-				return nil, fmt.Errorf("failed to open user database: %w", err)
-			}
-			userDBsMutex.RLock()
-			userDB = userDBs[userID]
-		} else {
-			return nil, fmt.Errorf("user database not found for user %s", username)
+
+		// InitUserDB will create the database if it doesn't exist
+		if err := InitUserDB(userID, filepath); err != nil {
+			return nil, fmt.Errorf("failed to initialize user database: %w", err)
 		}
+
+		userDBsMutex.RLock()
+		userDB = userDBs[userID]
+		userDBsMutex.RUnlock()
 	}
 
 	return userDB, nil

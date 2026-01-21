@@ -145,6 +145,7 @@ func (s *AutoImportService) processFile(userID, filePath, filename string) {
 	}
 
 	logWriter.log("Starting import of %s", filename)
+	startTime := time.Now()
 
 	// Get username from auth database
 	username, err := GetUsernameByID(userID)
@@ -192,10 +193,13 @@ func (s *AutoImportService) processFile(userID, filePath, filename string) {
 		completePath = filepath.Join(completeDir, filename)
 	}
 
+	duration := time.Since(startTime)
+
 	if parseErr != nil {
 		logWriter.log("ERROR: Import failed: %v", parseErr)
 		logWriter.log("File will remain in ingest directory for manual review")
-		slog.Error("Import failed", "userID", userID, "file", filename, "error", parseErr)
+		logWriter.log("Import duration: %s", duration)
+		slog.Error("Import failed", "userID", userID, "file", filename, "error", parseErr, "duration", duration)
 	} else {
 		// Move file to complete directory
 		if err := os.Rename(filePath, completePath); err != nil {
@@ -211,9 +215,9 @@ func (s *AutoImportService) processFile(userID, filePath, filename string) {
 			slog.Warn("Failed to move log file", "userID", userID, "error", err)
 		}
 
-		logWriter.log("Import completed successfully")
+		logWriter.log("Import completed successfully in %s", duration)
 		logWriter.log("File moved to: %s", completePath)
-		slog.Info("Import completed", "userID", userID, "file", filename)
+		slog.Info("Import completed", "userID", userID, "file", filename, "duration", duration)
 	}
 }
 
