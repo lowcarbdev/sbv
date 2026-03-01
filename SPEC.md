@@ -245,7 +245,7 @@ air
 cd frontend && npm run dev
 ```
 
-Frontend dev server runs on `:5173` and proxies API calls to `:8081`.
+Frontend dev server runs on `:5175` and proxies API calls to `:8085`.
 
 ### Production Build
 

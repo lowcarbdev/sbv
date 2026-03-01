@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import { Modal, Button, Form, Alert, Spinner, ProgressBar } from 'react-bootstrap'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 
 function Upload({ onClose, onSuccess }) {
   const [files, setFiles] = useState([])

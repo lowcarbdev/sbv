@@ -3,7 +3,7 @@ import axios from 'axios'
 import MediaCarousel from './MediaCarousel'
 import './MediaGrid.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 
 function MediaGrid({ conversation, startDate, endDate }) {
   const [mediaItems, setMediaItems] = useState([])

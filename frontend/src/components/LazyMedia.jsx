@@ -3,7 +3,7 @@ import axios from 'axios'
 import VCardPreview from './VCardPreview'
 import './LazyMedia.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 
 function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) {
   const [src, setSrc] = useState(null)

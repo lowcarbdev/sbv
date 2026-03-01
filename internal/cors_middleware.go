@@ -11,8 +11,9 @@ import (
 func CustomCORSMiddleware() echo.MiddlewareFunc {
 	allowedOrigins := map[string]bool{
 		"http://localhost:5173": true,
+		"http://localhost:5175": true,
 		"http://localhost:3000": true,
-		"http://localhost:8081": true,
+		"http://localhost:8085": true,
 	}
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

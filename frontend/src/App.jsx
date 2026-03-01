@@ -15,7 +15,7 @@ import ChangePasswordModal from './components/ChangePasswordModal'
 import SettingsModal from './components/SettingsModal'
 import './App.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 
 function App() {
   const navigate = useNavigate()

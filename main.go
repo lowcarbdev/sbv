@@ -150,7 +150,7 @@ func main() {
 	go func() {
 		port := os.Getenv("PORT")
 		if port == "" {
-			port = "8081"
+			port = "8085"
 		}
 		pprofPort := "6060"
 		logger.Info("Memory profiling available", "url", "http://localhost:"+pprofPort+"/debug/pprof/")
@@ -161,7 +161,7 @@ func main() {
 
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8081"
+		port = "8085"
 	}
 
 	// Create HTTP server with longer timeouts for large file uploads

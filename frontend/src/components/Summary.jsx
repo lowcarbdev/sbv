@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, LineChart, Line, Legend
 } from 'recharts'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8081/api'
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 
 // Color palette
 const COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d', '#0dcaf0', '#6610f2', '#d63384']
@@ -166,23 +166,25 @@ function Summary({ startDate, endDate }) {
               <div className="card-header">Sent vs Received</div>
               <div className="card-body">
                 {messageTypeData.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={200}>
+                  <ResponsiveContainer width="100%" height={240}>
                     <PieChart>
                       <Pie
                         data={messageTypeData}
                         cx="50%"
-                        cy="50%"
+                        cy="45%"
                         innerRadius={40}
-                        outerRadius={80}
+                        outerRadius={70}
                         paddingAngle={5}
                         dataKey="value"
-                        label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                        label={({ percent }) => `${(percent * 100).toFixed(0)}%`}
+                        labelLine={true}
                       >
                         {messageTypeData.map((entry, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
-                      <Tooltip />
+                      <Tooltip formatter={(value, name) => [value.toLocaleString(), name]} />
+                      <Legend />
                     </PieChart>
                   </ResponsiveContainer>
                 ) : (
