@@ -36,15 +36,17 @@ services:
 
 ## Features
 
+- **Full privacy** - No telemetry of any kind
 - **Multi-user** - Create a username/password to log in
-- **Import SMS Backup & Restore XML** - Upload XML files from the web interface.
-- **Idempotent imports** - Upload the same XML file without duplicates.
+- **Import SMS Backup & Restore XML** - Upload XML files from the web interface
+- **Idempotent imports** - Upload the same XML file without duplicates
 - **Tested with large backups** - Works with multi-GB backups
-- **SMS, MMS, and call logs support** - Read all types of call and message records.
-- **Inline image and video** - View images or watch videos as you browse. Even works with Apple HEIC and 3gp videos.
-- **Fast conversation filtering** - Skip to the right conversation.
-- **Full-text search** - Find what you want fast.
-- **Activity view** - See it as it happened.
+- **SMS, MMS, and call logs support** - Read all types of call and message records
+- **Inline image and video** - View images or watch videos as you browse. Even works with Apple HEIC and 3gp videos
+- **Fast conversation filtering** - Skip to the right conversation
+- **Full-text search** - Find what you want fast
+- **Activity view** - See it as it happened
+- **Summary view** - View analytics about your messages
 - **vCard preview** - Preview the contents of contact cards (vCards)
 - **Mobile view** - UI works on both desktop and mobile
 
