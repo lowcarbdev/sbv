@@ -957,6 +957,18 @@ func GetMessageMedia(userDB *sql.DB, messageID string) ([]byte, string, error) {
 		return convertedData, "video/mp4", nil
 	}
 
+	// Convert unsupported audio formats (AMR, etc.) to MP3 if needed
+	if needsAudioConversion(mediaType) {
+		slog.Info("Converting audio to MP3", "from_type", mediaType, "message_id", messageID)
+		convertedData, err := convertAudioToMP3(mediaData)
+		if err != nil {
+			slog.Error("Failed to convert audio to MP3", "message_id", messageID, "error", err)
+			return mediaData, mediaType, nil
+		}
+		slog.Info("Successfully converted audio to MP3", "message_id", messageID)
+		return convertedData, "audio/mpeg", nil
+	}
+
 	return mediaData, mediaType, nil
 }
 

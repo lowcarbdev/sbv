@@ -518,6 +518,67 @@ func convertVideoToMP4(videoData []byte) ([]byte, error) {
 	return convertedData, nil
 }
 
+// needsAudioConversion checks if an audio format needs conversion for browser compatibility
+func needsAudioConversion(contentType string) bool {
+	ct := strings.ToLower(strings.TrimSpace(contentType))
+	unsupportedFormats := []string{
+		"audio/amr", "audio/amr-wb",
+		"audio/3gpp", "audio/3gpp2",
+	}
+	for _, format := range unsupportedFormats {
+		if strings.Contains(ct, format) {
+			return true
+		}
+	}
+	return false
+}
+
+// convertAudioToMP3 converts unsupported audio formats (like AMR) to MP3 using ffmpeg
+func convertAudioToMP3(audioData []byte) ([]byte, error) {
+	tmpInputFile, err := os.CreateTemp("", "audio-input-*")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp input file: %w", err)
+	}
+	defer os.Remove(tmpInputFile.Name())
+	defer tmpInputFile.Close()
+
+	tmpOutputFile, err := os.CreateTemp("", "audio-output-*.mp3")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create temp output file: %w", err)
+	}
+	defer os.Remove(tmpOutputFile.Name())
+	tmpOutputFile.Close()
+
+	_, err = tmpInputFile.Write(audioData)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write input audio: %w", err)
+	}
+	tmpInputFile.Close()
+
+	cmd := exec.Command("ffmpeg",
+		"-i", tmpInputFile.Name(),
+		"-codec:a", "libmp3lame",
+		"-q:a", "2",
+		"-y",
+		tmpOutputFile.Name(),
+	)
+
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	err = cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("ffmpeg audio conversion failed: %w, stderr: %s", err, stderr.String())
+	}
+
+	convertedData, err := os.ReadFile(tmpOutputFile.Name())
+	if err != nil {
+		return nil, fmt.Errorf("failed to read converted audio: %w", err)
+	}
+
+	return convertedData, nil
+}
+
 func convertCallEntry(call CallEntry) (CallLog, error) {
 	dateMs, err := strconv.ParseInt(call.Date, 10, 64)
 	if err != nil {
