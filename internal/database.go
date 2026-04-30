@@ -852,6 +852,27 @@ func GetActivityByAddress(userDB *sql.DB, address string, startDate, endDate *ti
 	return activities, nil
 }
 
+// CountActivityByAddress returns the total number of activity rows for a given address and date range
+func CountActivityByAddress(userDB *sql.DB, address string, startDate, endDate *time.Time) (int, error) {
+	query := `SELECT COUNT(*) FROM messages WHERE 1=1`
+	args := []interface{}{}
+	if address != "" {
+		query += " AND address = ?"
+		args = append(args, address)
+	}
+	if startDate != nil {
+		query += " AND date >= ?"
+		args = append(args, startDate.Unix())
+	}
+	if endDate != nil {
+		query += " AND date <= ?"
+		args = append(args, endDate.Unix())
+	}
+	var count int
+	err := userDB.QueryRow(query, args...).Scan(&count)
+	return count, err
+}
+
 // GetMediaByAddress fetches only media items (images/videos) for a specific address
 func GetMediaByAddress(userDB *sql.DB, address string, startDate, endDate *time.Time) ([]Message, error) {
 	query := `

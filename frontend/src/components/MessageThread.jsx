@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useLayoutEffect, useRef } from 'react'
 import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { format } from 'date-fns'
@@ -11,20 +11,47 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
   const location = useLocation()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
+  const [loadingOlder, setLoadingOlder] = useState(false)
+  const [loadingNewer, setLoadingNewer] = useState(false)
+  const [offset, setOffset] = useState(0)
+  const [tailOffset, setTailOffset] = useState(0)
+  const [totalCount, setTotalCount] = useState(0)
   const [highlightedMessageId, setHighlightedMessageId] = useState(null)
   const [isPreprintingMedia, setIsPreprintingMedia] = useState(false)
   const [showMediaOnly, setShowMediaOnly] = useState(false)
   const messageRefs = useRef({})
   const printTriggeredRef = useRef(false)
+  const scrollContainerRef = useRef(null)
+  const suppressAutoScrollRef = useRef(false)
+  const scrollToItemIdRef = useRef(null)
 
   useEffect(() => {
     if (conversation) {
+      setOffset(0)
+      setTailOffset(0)
+      setTotalCount(0)
+      setItems([])
       fetchItems()
-      setShowMediaOnly(false) // Reset to message view when conversation changes
+      setShowMediaOnly(false)
     } else {
       setItems([])
+      setOffset(0)
+      setTailOffset(0)
+      setTotalCount(0)
     }
-  }, [conversation, startDate, endDate])
+  }, [conversation, startDate, endDate, messageLimit])
+
+  // After loading older items, scroll to the first new item so the user sees
+  // where the new content starts.
+  useLayoutEffect(() => {
+    if (scrollToItemIdRef.current !== null) {
+      const el = messageRefs.current[scrollToItemIdRef.current]
+      if (el) {
+        el.scrollIntoView({ block: 'start' })
+      }
+      scrollToItemIdRef.current = null
+    }
+  })
 
   // Scroll to specific message if messageId is in URL
   useEffect(() => {
@@ -104,6 +131,11 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
 
   // Automatically scroll to the last message when opening a conversation
   useEffect(() => {
+    if (suppressAutoScrollRef.current) {
+      suppressAutoScrollRef.current = false
+      return
+    }
+
     if (items.length > 0) {
       const params = new URLSearchParams(location.search)
       const messageId = params.get('messageId')
@@ -229,20 +261,119 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
   const fetchItems = async () => {
     setLoading(true)
     try {
+      const limit = messageLimit || 100000
       const params = {
         address: conversation.address,
-        type: conversation.type
+        type: conversation.type,
+        limit,
+        offset: 0,
       }
       if (startDate) params.start = startDate.toISOString()
       if (endDate) params.end = endDate.toISOString()
-      if (messageLimit) params.limit = messageLimit
 
-      const response = await axios.get(`${API_BASE}/messages`, { params })
-      setItems(response.data || [])
+      // Fetch with offset 0 first to get the total count, then re-fetch the last page
+      const probe = await axios.get(`${API_BASE}/messages`, { params })
+      const total = probe.data.total || 0
+      setTotalCount(total)
+
+      // If all messages fit in one page, we're done
+      if (total <= limit) {
+        setOffset(0)
+        setItems(probe.data.items || [])
+        return
+      }
+
+      // Otherwise fetch the last page so the most recent messages are shown
+      const lastPageOffset = Math.max(0, total - limit)
+      const lastPageParams = { ...params, offset: lastPageOffset }
+      const response = await axios.get(`${API_BASE}/messages`, { params: lastPageParams })
+      setOffset(lastPageOffset)
+      setItems(response.data.items || [])
     } catch (error) {
       console.error('Error fetching items:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchOlderItems = async () => {
+    const limit = messageLimit || 100000
+    const newOffset = Math.max(0, offset - limit)
+    // How many rows to fetch: exactly the gap between newOffset and current offset
+    const fetchLimit = offset - newOffset
+    setLoadingOlder(true)
+    try {
+      const params = {
+        address: conversation.address,
+        type: conversation.type,
+        limit: fetchLimit,
+        offset: newOffset,
+      }
+      if (startDate) params.start = startDate.toISOString()
+      if (endDate) params.end = endDate.toISOString()
+
+      const response = await axios.get(`${API_BASE}/messages`, { params })
+      const olderItems = response.data.items || []
+
+      // Record the last new item's id so the layout effect can scroll to it —
+      // user lands at the newest of the older messages and can scroll up from there
+      const lastNewItem = olderItems[olderItems.length - 1]
+      if (lastNewItem) {
+        const msg = lastNewItem.type === 'message' ? lastNewItem.message : lastNewItem.call
+        scrollToItemIdRef.current = msg?.id ?? lastNewItem.id
+      }
+      suppressAutoScrollRef.current = true
+
+      const trimCount = olderItems.length
+      setItems(prev => {
+        const combined = [...olderItems, ...prev]
+        return (trimCount > 0 && combined.length > trimCount)
+          ? combined.slice(0, combined.length - trimCount)
+          : combined
+      })
+      setOffset(newOffset)
+      setTailOffset(to => to + trimCount)
+    } catch (error) {
+      console.error('Error fetching older items:', error)
+    } finally {
+      setLoadingOlder(false)
+    }
+  }
+
+  const fetchNewerItems = async () => {
+    const limit = messageLimit || 100000
+    // tailOffset is the DB offset of the first trimmed row; fetch up to limit rows from there
+    const fetchLimit = Math.min(limit, tailOffset)
+    const fetchOffset = tailOffset - fetchLimit
+    setLoadingNewer(true)
+    try {
+      const params = {
+        address: conversation.address,
+        type: conversation.type,
+        limit: fetchLimit,
+        offset: fetchOffset,
+      }
+      if (startDate) params.start = startDate.toISOString()
+      if (endDate) params.end = endDate.toISOString()
+
+      const response = await axios.get(`${API_BASE}/messages`, { params })
+      const newerItems = response.data.items || []
+
+      setTailOffset(fetchOffset)
+      setItems(prev => {
+        const combined = [...prev, ...newerItems]
+        // Trim the same number of rows from the head to keep memory bounded
+        const trimCount = newerItems.length
+        if (trimCount > 0 && combined.length > trimCount) {
+          setOffset(o => o + trimCount)
+          return combined.slice(trimCount)
+        }
+        return combined
+      })
+    } catch (error) {
+      console.error('Error fetching newer items:', error)
+    } finally {
+      setLoadingNewer(false)
     }
   }
 
@@ -464,7 +595,14 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
             })()}
             <div className="d-flex align-items-center gap-2">
               <span className="badge bg-primary" style={{fontSize: '0.7rem'}}>
-                {items.length} {isCallLog ? 'call' : 'message'}{items.length !== 1 ? 's' : ''}
+                {totalCount > items.length
+                  ? (() => {
+                      const end = totalCount - tailOffset
+                      const start = end - items.length + 1
+                      return `${isCallLog ? 'call' : 'message'}s ${start}–${end} of ${totalCount}`
+                    })()
+                  : `${items.length} ${isCallLog ? 'call' : 'message'}${items.length !== 1 ? 's' : ''}`
+                }
               </span>
             </div>
           </div>
@@ -494,7 +632,7 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
       </div>
 
       {/* Content */}
-      <div className="flex-fill overflow-auto p-2 p-md-4 bg-light">
+      <div ref={scrollContainerRef} className="flex-fill overflow-auto p-2 p-md-4 bg-light">
         {showMediaOnly && !isCallLog ? (
           // Media Grid View
           <MediaGrid conversation={conversation} startDate={startDate} endDate={endDate} />
@@ -542,8 +680,26 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
         ) : (
           // Unified Message and Call View
           <div className="d-flex flex-column gap-1">
+            {/* Load older messages button */}
+            {offset > 0 && (
+              <div className="d-flex justify-content-center mb-2">
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={fetchOlderItems}
+                  disabled={loadingOlder}
+                >
+                  {loadingOlder ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Loading...
+                    </>
+                  ) : (
+                    `↑ Load older messages`
+                  )}
+                </button>
+              </div>
+            )}
             {items.map((item) => {
-              // Check if this is an ActivityItem (has type field) or a direct Message
               const isActivityItem = item.type === 'message' || item.type === 'call'
               const isCall = isActivityItem && item.type === 'call'
               const message = isActivityItem ? item.message : item
@@ -636,6 +792,25 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
                 </div>
               )
             })}
+            {/* Load newer messages button */}
+            {tailOffset > 0 && (
+              <div className="d-flex justify-content-center mt-2">
+                <button
+                  className="btn btn-sm btn-outline-secondary"
+                  onClick={fetchNewerItems}
+                  disabled={loadingNewer}
+                >
+                  {loadingNewer ? (
+                    <>
+                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                      Loading...
+                    </>
+                  ) : (
+                    `↓ Load newer messages`
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

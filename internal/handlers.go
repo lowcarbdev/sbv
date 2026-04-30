@@ -210,6 +210,12 @@ func HandleMessages(c echo.Context) error {
 			}
 		}
 
+		total, err := CountActivityByAddress(userDB, address, startDate, endDate)
+		if err != nil {
+			slog.Error("Error counting activity", "error", err)
+			total = 0
+		}
+
 		activities, err := GetActivityByAddress(userDB, address, startDate, endDate, limit, offset)
 		if err != nil {
 			slog.Error("Error getting activity", "error", err)
@@ -229,7 +235,10 @@ func HandleMessages(c echo.Context) error {
 			activities = filteredActivities
 		}
 
-		return c.JSON(http.StatusOK, activities)
+		return c.JSON(http.StatusOK, map[string]interface{}{
+			"items": activities,
+			"total": total,
+		})
 	}
 
 	messages, err := GetMessages(userDB, address, startDate, endDate)
