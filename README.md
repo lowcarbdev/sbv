@@ -49,6 +49,7 @@ services:
 - **Summary view** - View analytics about your messages
 - **vCard preview** - Preview the contents of contact cards (vCards)
 - **Mobile view** - UI works on both desktop and mobile
+- **Light, dark, and system themes** - Use the theme toggle in the header to switch between light mode, dark mode, or follow your OS preference. The UI (conversations, search, activity, and settings) uses Bootstrap theming so surfaces and text stay readable in either mode.
 
 ## Tech Stack
 
