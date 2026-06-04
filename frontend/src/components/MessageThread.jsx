@@ -1,4 +1,5 @@
 import { useState, useEffect, useLayoutEffect, useRef } from 'react'
+import { useTheme } from '../contexts/ThemeContext'
 import { useLocation } from 'react-router-dom'
 import axios from 'axios'
 import { format } from 'date-fns'
@@ -8,6 +9,8 @@ import MediaGrid from './MediaGrid'
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 
 function MessageThread({ conversation, startDate, endDate, messageLimit }) {
+  const { resolvedTheme } = useTheme()
+  const isDark = resolvedTheme === 'dark'
   const location = useLocation()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(false)
@@ -509,12 +512,12 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
 
   if (!conversation) {
     return (
-      <div className="d-flex align-items-center justify-content-center h-100 text-muted">
+      <div className="d-flex align-items-center justify-content-center h-100 text-body-secondary">
         <div className="text-center">
           <svg style={{width: '5rem', height: '5rem'}} className="mx-auto mb-3 text-secondary opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
           </svg>
-          <p className="h5 text-dark">Select a conversation</p>
+          <p className="h5 text-body-emphasis mb-2">Select a conversation</p>
           <p className="small mt-2">Choose a conversation from the list to view messages</p>
         </div>
       </div>
@@ -558,7 +561,7 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
       )}
 
       {/* Thread Header */}
-      <div className="bg-light border-bottom p-2 p-md-4 shadow-sm">
+      <div className="bg-body-tertiary border-bottom p-2 p-md-4 shadow-sm">
         <div className="d-flex align-items-center gap-2 gap-md-3">
           <div className="p-2 p-md-3 rounded-circle bg-primary bg-gradient shadow">
             {isCallLog ? (
@@ -632,7 +635,7 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
       </div>
 
       {/* Content */}
-      <div ref={scrollContainerRef} className="flex-fill overflow-auto p-2 p-md-4 bg-light">
+      <div ref={scrollContainerRef} className="flex-fill overflow-auto p-2 p-md-4 bg-body-secondary">
         {showMediaOnly && !isCallLog ? (
           // Media Grid View
           <MediaGrid conversation={conversation} startDate={startDate} endDate={endDate} />
@@ -710,7 +713,7 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
                 const typeInfo = getCallTypeInfo(call.type)
                 return (
                   <div key={`call-${call.id}`} className="d-flex justify-content-center my-1">
-                    <div className="badge bg-light text-dark border px-3 py-2 d-flex align-items-center gap-2" style={{fontSize: '0.75rem'}}>
+                    <div className="badge bg-body-secondary text-body-emphasis border px-3 py-2 d-flex align-items-center gap-2" style={{fontSize: '0.75rem'}}>
                       <span className={typeInfo.color} style={{fontSize: '1rem'}}>{typeInfo.icon}</span>
                       <span className={`fw-semibold ${typeInfo.color}`}>{typeInfo.label} call</span>
                       <span className="text-muted">·</span>
@@ -750,7 +753,9 @@ function MessageThread({ conversation, startDate, endDate, messageLimit }) {
                       className={`card shadow-sm ${
                         isSent
                           ? 'bg-primary text-white'
-                          : 'bg-white'
+                          : isDark
+                            ? 'bg-body-tertiary text-body'
+                            : 'bg-white'
                       } ${
                         isHighlighted
                           ? 'border-warning border-3'

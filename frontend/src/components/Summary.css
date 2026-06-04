@@ -1,0 +1,78 @@
+/*
+ * Summary charts — dark-mode surface + readable axis/tooltip text.
+ *
+ * Selectors are intentionally scoped to the Summary page only, using the
+ * existing `.card` + `.border-*` stat cards and the plain `.card` chart
+ * cards that are already in the DOM from Summary.jsx. No JSX changes are
+ * required; this file is imported only by Summary.jsx.
+ */
+
+/* Stats cards / chart cards: re-colorize the card body in dark mode. */
+html[data-bs-theme="dark"] .summary-view .card {
+    background-color: var(--bs-body-tertiary);
+    color: var(--bs-body-color);
+}
+
+html[data-bs-theme="dark"] .summary-view .card-body,
+html[data-bs-theme="dark"] .summary-view .border-primary .card-body,
+html[data-bs-theme="dark"] .summary-view .border-success .card-body,
+html[data-bs-theme="dark"] .summary-view .border-info .card-body,
+html[data-bs-theme="dark"] .summary-view .border-warning .card-body {
+    background-color: var(--bs-body-secondary);
+}
+
+/* Recharts SVG canvas */
+html[data-bs-theme="dark"] .summary-view .recharts-wrapper {
+    color: var(--bs-body-color);
+}
+
+/* Axis lines and ticks */
+html[data-bs-theme="dark"] .summary-view .recharts-cartesian-axis-line,
+html[data-bs-theme="dark"] .summary-view .recharts-polar-axis-angle-axis line,
+html[data-bs-theme="dark"] .summary-view .recharts-polar-axis-radial-axis line {
+    stroke: var(--bs-border-color);
+}
+
+html[data-bs-theme="dark"] .summary-view .recharts-cartesian-axis-tick-value,
+html[data-bs-theme="dark"]
+    .summary-view
+    .recharts-polar-axis-angle-axis-tick-value,
+html[data-bs-theme="dark"]
+    .summary-view
+    .recharts-polar-axis-radial-axis-tick-value {
+    fill: var(--bs-body-color);
+}
+
+/* Grid */
+html[data-bs-theme="dark"]
+    .summary-view
+    .recharts-cartesian-grid-horizontal
+    line,
+html[data-bs-theme="dark"]
+    .summary-view
+    .recharts-cartesian-grid-vertical
+    line {
+    stroke: var(--bs-border-color);
+}
+
+/* Tooltip popover */
+html[data-bs-theme="dark"] .summary-view .recharts-tooltip-wrapper {
+    outline: none;
+}
+
+html[data-bs-theme="dark"] .summary-view .recharts-default-tooltip {
+    background-color: var(--bs-body-tertiary) !important;
+    border-color: var(--bs-border-color) !important;
+    color: var(--bs-body-color) !important;
+}
+
+/* Legend */
+html[data-bs-theme="dark"] .summary-view .recharts-legend-item-text {
+    color: var(--bs-body-color);
+}
+
+/* Label text */
+html[data-bs-theme="dark"] .summary-view .recharts-pie-label-text,
+html[data-bs-theme="dark"] .summary-view .recharts-bar-label-text {
+    fill: var(--bs-body-color);
+}

@@ -133,7 +133,7 @@ function ConversationList({ conversations, selectedConversation, onSelectConvers
             style={{cursor: 'pointer'}}
           >
             <div className="d-flex align-items-start gap-2">
-              <div className="flex-shrink-0 mt-1 p-2 rounded-circle bg-white shadow-sm">
+              <div className="flex-shrink-0 mt-1 p-2 rounded-circle bg-body-tertiary shadow-sm">
                 {getConversationIcon(conv.type)}
               </div>
               <div className="flex-fill min-w-0" style={{overflow: 'hidden'}}>

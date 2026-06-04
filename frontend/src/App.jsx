@@ -13,6 +13,7 @@ import Search from './components/Search'
 import Summary from './components/Summary'
 import ChangePasswordModal from './components/ChangePasswordModal'
 import SettingsModal from './components/SettingsModal'
+import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
@@ -190,7 +191,7 @@ function App() {
   })
 
   return (
-    <div className="vh-100 d-flex flex-column bg-light">
+    <div className="vh-100 d-flex flex-column bg-body-tertiary">
       {/* Header */}
       <header className="bg-primary bg-gradient text-white py-1 px-2 shadow" style={{zIndex: 1030}}>
         <div className="d-flex justify-content-between align-items-center">
@@ -201,6 +202,7 @@ function App() {
             <h1 className="h5 mb-0 fw-bold">SMS Backup Viewer</h1>
           </div>
           <div className="d-flex align-items-center gap-2">
+            <ThemeToggle />
             <button
               onClick={() => setShowUpload(true)}
               className="btn btn-light btn-sm shadow-sm d-flex align-items-center gap-1"
@@ -256,7 +258,7 @@ function App() {
       </header>
 
       {/* View Switcher */}
-      <div className="bg-white border-bottom shadow-sm">
+      <div className="bg-body-tertiary border-bottom shadow-sm">
         <div className="container-fluid">
           <ul className="nav nav-tabs border-0">
             <li className="nav-item">
@@ -319,7 +321,7 @@ function App() {
       </div>
 
       {/* Date Filter */}
-      <div className="date-filter-container bg-white border-bottom shadow-sm" style={{zIndex: 1025, position: 'relative'}}>
+      <div className="date-filter-container bg-body-tertiary border-bottom shadow-sm" style={{zIndex: 1025, position: 'relative'}}>
         <DateFilter
           startDate={startDate}
           endDate={endDate}
@@ -336,9 +338,9 @@ function App() {
           <>
             {/* Conversation List */}
             <div
-              className={`conversation-sidebar bg-white rounded-3 shadow overflow-hidden border ${showSidebar ? 'show' : ''}`}
+              className={`conversation-sidebar bg-body-tertiary rounded-3 shadow overflow-hidden border ${showSidebar ? 'show' : ''}`}
             >
-              <div className="bg-light border-bottom p-1">
+              <div className="bg-body-tertiary border-bottom p-1">
                 <h2 className="h6 mb-1 d-flex align-items-center gap-1 px-1">
                   <svg style={{width: '1rem', height: '1rem'}} className="text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
@@ -369,7 +371,7 @@ function App() {
             </div>
 
             {/* Message Thread */}
-            <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border message-thread-container" style={{minWidth: 0}}>
+            <div className="flex-fill bg-body-secondary rounded-3 shadow overflow-hidden border message-thread-container" style={{minWidth: 0}}>
               <MessageThread
                 conversation={selectedConversation}
                 startDate={startDate}
@@ -380,7 +382,7 @@ function App() {
           </>
         ) : activeView === 'search' ? (
           /* Search View */
-          <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
+          <div className="flex-fill bg-body-secondary rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
             <Search
               searchQuery={searchQuery}
               setSearchQuery={setSearchQuery}
@@ -396,7 +398,7 @@ function App() {
           </div>
         ) : activeView === 'calls' ? (
           /* Calls View */
-          <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
+          <div className="flex-fill bg-body-secondary rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
             <Calls
               startDate={startDate}
               endDate={endDate}
@@ -404,7 +406,7 @@ function App() {
           </div>
         ) : activeView === 'summary' ? (
           /* Summary View */
-          <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
+          <div className="flex-fill bg-body-secondary rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
             <Summary
               startDate={startDate}
               endDate={endDate}
@@ -412,7 +414,7 @@ function App() {
           </div>
         ) : (
           /* Activity View */
-          <div className="flex-fill bg-white rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
+          <div className="flex-fill bg-body-secondary rounded-3 shadow overflow-hidden border" style={{minWidth: 0}}>
             <Activity
               startDate={startDate}
               endDate={endDate}

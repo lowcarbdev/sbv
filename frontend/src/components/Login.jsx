@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
+import ThemeToggle from './ThemeToggle'
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true)
@@ -64,7 +65,10 @@ function Login() {
   }
 
   return (
-    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light">
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-body-tertiary position-relative">
+      <div className="position-absolute top-0 end-0 p-3" style={{ zIndex: 10 }}>
+        <ThemeToggle variant="surface" />
+      </div>
       <div className="container">
         <div className="row justify-content-center">
           <div className="col-md-6 col-lg-4">

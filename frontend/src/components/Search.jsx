@@ -77,7 +77,7 @@ function Search({ searchQuery, setSearchQuery, results, setResults, loading, set
   return (
     <div className="h-100 d-flex flex-column">
       {/* Header */}
-      <div className="bg-light border-bottom p-3">
+      <div className="bg-body-tertiary border-bottom p-3">
         <h2 className="h5 mb-3 d-flex align-items-center gap-2">
           <svg style={{width: '1.25rem', height: '1.25rem'}} className="text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
