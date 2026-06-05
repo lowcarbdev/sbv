@@ -91,7 +91,7 @@ jobs:
         with:
           context: .
           platforms: ${{ matrix.platform }}
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           labels: ${{ needs.prepare.outputs.labels }}
           build-args: |
             VERSION=${{ needs.prepare.outputs.version }}
@@ -100,14 +100,12 @@ jobs:
           outputs: type=image,name=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }},push-by-digest=true,name-canonical=true,push=${{ github.event_name != 'pull_request' }}
 
       - name: Export digest
-        if: github.event_name != 'pull_request'
         run: |
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}"
 
       - name: Upload digest
-        if: github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: digests-${{ matrix.runner }}
@@ -117,7 +115,6 @@ jobs:
 
   merge:
     needs: [prepare, build]
-    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
