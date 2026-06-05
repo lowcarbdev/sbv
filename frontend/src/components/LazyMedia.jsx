@@ -184,7 +184,7 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
       {/* Placeholder shown before loading or while loading */}
       {!src && !vcfData && !error && (
         <div
-          className="bg-light rounded d-flex align-items-center justify-content-center position-relative overflow-hidden"
+          className="bg-body-tertiary rounded d-flex align-items-center justify-content-center position-relative overflow-hidden"
           style={{
             width: '100%',
             aspectRatio: isVideo ? '16/9' : isAudio ? 'auto' : '3/4', // Common phone camera ratio
@@ -307,7 +307,7 @@ function LazyMedia({ messageId, mediaType, className, alt = "MMS attachment" }) 
             <VCardPreview vcfText={vcfData} messageId={messageId} />
           )}
           {!isImage && !isVideo && !isAudio && !isVCard && (
-            <div className="small p-2 rounded bg-light d-flex align-items-center gap-1">
+            <div className="small p-2 rounded bg-body-tertiary d-flex align-items-center gap-1">
               <svg style={{width: '1rem', height: '1rem'}} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>

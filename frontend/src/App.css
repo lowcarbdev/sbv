@@ -224,7 +224,8 @@
   }
 
   /* Call log items */
-  .bg-light.text-dark.border {
+  .bg-light.text-dark.border,
+  .bg-body-secondary.text-body-emphasis.border {
     background: white !important;
     border: 1px solid #666 !important;
     color: black !important;
