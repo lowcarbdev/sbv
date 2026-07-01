@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/labstack/echo/v4 v4.13.4
 	github.com/strukturag/libheif-go v0.0.0-20250130134905-55b3482bea15
-	golang.org/x/crypto v0.44.0
+	golang.org/x/crypto v0.45.0
 	golang.org/x/term v0.39.0
 )
 
