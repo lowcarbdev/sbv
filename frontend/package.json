@@ -17,7 +17,7 @@
     "react-bootstrap": "^2.10.10",
     "react-datepicker": "^8.8.0",
     "react-dom": "^19.1.1",
-    "react-router-dom": "^7.9.5",
+    "react-router-dom": "^7.18.1",
     "recharts": "^3.7.0"
   },
   "devDependencies": {
