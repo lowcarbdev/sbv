@@ -1,10 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import ThemeToggle from './ThemeToggle'
 
+const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
+
 function Login() {
   const [isLogin, setIsLogin] = useState(true)
+  const [registrationEnabled, setRegistrationEnabled] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -12,6 +16,19 @@ function Login() {
   const [loading, setLoading] = useState(false)
   const { login, register } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    axios.get(`${API_BASE}/config`)
+      .then((response) => {
+        if (response.data.registration_enabled === false) {
+          setRegistrationEnabled(false)
+          setIsLogin(true)
+        }
+      })
+      .catch(() => {
+        // If the config endpoint is unavailable, leave registration visible
+      })
+  }, [])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -158,18 +175,20 @@ function Login() {
                     )}
                   </button>
 
-                  <div className="text-center">
-                    <button
-                      type="button"
-                      className="btn btn-link text-decoration-none"
-                      onClick={toggleMode}
-                      disabled={loading}
-                    >
-                      {isLogin
-                        ? "Don't have an account? Sign up"
-                        : 'Already have an account? Sign in'}
-                    </button>
-                  </div>
+                  {registrationEnabled && (
+                    <div className="text-center">
+                      <button
+                        type="button"
+                        className="btn btn-link text-decoration-none"
+                        onClick={toggleMode}
+                        disabled={loading}
+                      >
+                        {isLogin
+                          ? "Don't have an account? Sign up"
+                          : 'Already have an account? Sign in'}
+                      </button>
+                    </div>
+                  )}
                 </form>
               </div>
             </div>

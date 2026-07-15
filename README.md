@@ -62,6 +62,7 @@ services:
 - `PUID` - User ID to run the application as (default: `1000`)
 - `PGID` - Group ID to run the application as (default: `1000`)
 - `PPROF_ENABLED` - Set to `true` to enable the Go pprof profiling server on `127.0.0.1:6060` (default: disabled)
+- `DISABLE_REGISTRATION` - Set to `true` to prevent new user sign-ups (default: registration open). Useful after you've created your own account.
 
 **Note on PUID/PGID**: Setting these to match your host user ensures that files created in the mounted volume have the desired permissions. Find your UID/GID with `id -u` and `id -g`.
 

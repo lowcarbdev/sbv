@@ -11,7 +11,26 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// RegistrationEnabled reports whether new user sign-ups are allowed
+func RegistrationEnabled() bool {
+	return os.Getenv("DISABLE_REGISTRATION") != "true"
+}
+
+// HandleConfig returns public configuration for the frontend
+func HandleConfig(c echo.Context) error {
+	return c.JSON(http.StatusOK, map[string]bool{
+		"registration_enabled": RegistrationEnabled(),
+	})
+}
+
 func HandleRegister(c echo.Context) error {
+	if !RegistrationEnabled() {
+		return c.JSON(http.StatusForbidden, AuthResponse{
+			Success: false,
+			Error:   "Registration is disabled",
+		})
+	}
+
 	var req RegisterRequest
 	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, AuthResponse{

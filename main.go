@@ -143,6 +143,9 @@ func main() {
 	// Version endpoint (public, no authentication required)
 	e.GET("/api/version", internal.HandleVersion)
 
+	// Public config endpoint (e.g. whether registration is enabled)
+	e.GET("/api/config", internal.HandleConfig, internal.NoCacheMiddleware)
+
 	// Serve static files from frontend/dist if it exists (for production/Docker)
 	if _, err := os.Stat("./frontend/dist"); err == nil {
 		// Serve static assets (JS, CSS, images, etc.)
