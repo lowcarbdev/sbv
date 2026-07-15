@@ -159,18 +159,16 @@ func main() {
 	autoImportService.Start()
 	defer autoImportService.Stop()
 
-	// Start pprof server in a separate goroutine for profiling
-	go func() {
-		port := os.Getenv("PORT")
-		if port == "" {
-			port = "8085"
-		}
-		pprofPort := "6060"
-		logger.Info("Memory profiling available", "url", "http://localhost:"+pprofPort+"/debug/pprof/")
-		if err := http.ListenAndServe(":"+pprofPort, nil); err != nil {
-			logger.Error("pprof server failed", "error", err)
-		}
-	}()
+	// Start pprof server on localhost when profiling is explicitly enabled
+	if os.Getenv("PPROF_ENABLED") == "true" {
+		go func() {
+			pprofAddr := "127.0.0.1:6060"
+			logger.Info("Memory profiling available", "url", "http://"+pprofAddr+"/debug/pprof/")
+			if err := http.ListenAndServe(pprofAddr, nil); err != nil {
+				logger.Error("pprof server failed", "error", err)
+			}
+		}()
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
