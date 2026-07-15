@@ -24,8 +24,15 @@ docker run -d \
 
 Run all tests:
 ```bash
-go test -tags "fts5 heic"
+make test
 ```
+
+The `fts5` build tag is required — plain `go test` fails with `no such module: fts5`. To also exercise HEIC conversion (requires libheif):
+```bash
+go test -tags "fts5 heic" ./...
+```
+
+Tests also run in CI on every push and pull request (`.github/workflows/test.yml`).
 
 ## Backend Setup
 
