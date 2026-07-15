@@ -67,6 +67,18 @@ func main() {
 		os.Exit(0)
 	}
 
+	// Periodically clean up expired sessions
+	go func() {
+		ticker := time.NewTicker(1 * time.Hour)
+		defer ticker.Stop()
+		for {
+			if err := internal.CleanExpiredSessions(); err != nil {
+				logger.Error("Failed to clean expired sessions", "error", err)
+			}
+			<-ticker.C
+		}
+	}()
+
 	// Create Echo instance
 	e := echo.New()
 
