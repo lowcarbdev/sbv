@@ -448,8 +448,13 @@ func HandleMedia(c echo.Context) error {
 	// Check if transcode is requested (for videos that browser can't play)
 	forceTranscode := c.QueryParam("transcode") == "true"
 
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+	}
+
 	// Fetch media from database
-	media, contentType, err := GetMessageMedia(userDB, messageID)
+	media, contentType, err := GetMessageMedia(userDB, userID, messageID)
 	if err != nil {
 		slog.Error("Error getting media", "error", err)
 		return c.JSON(http.StatusNotFound, map[string]string{

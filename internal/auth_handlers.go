@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
@@ -82,7 +83,7 @@ func HandleRegister(c echo.Context) error {
 	if dbPathPrefix == "" {
 		dbPathPrefix = "."
 	}
-	userDBPath := fmt.Sprintf("%s/sbv_%s.db", dbPathPrefix, user.ID)
+	userDBPath := filepath.Join(dbPathPrefix, fmt.Sprintf("sbv_%s.db", user.ID))
 	if err := InitUserDB(user.ID, userDBPath); err != nil {
 		slog.Error("Error initializing user database", "error", err)
 		return echo.ErrInternalServerError

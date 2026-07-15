@@ -13,8 +13,9 @@ type Message struct {
 	ThreadID    int       `json:"thread_id"`
 	Subject     string    `json:"subject,omitempty"`
 	MediaType   string    `json:"media_type,omitempty"`
-	MediaData   []byte    `json:"-"`
-	MediaBase64 string    `json:"media_base64,omitempty"`
+	MediaData     []byte `json:"-"`
+	MediaFilePath string `json:"-"`
+	MediaBase64   string `json:"media_base64,omitempty"`
 	// Additional SMS fields
 	Protocol      int    `json:"protocol,omitempty"`
 	Status        int    `json:"status,omitempty"` // -1 = none, 0 = complete, 32 = pending, 64 = failed

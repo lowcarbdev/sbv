@@ -167,7 +167,7 @@ func (s *AutoImportService) processFile(userID, filePath, filename string) {
 	var parseErr error
 	if strings.HasSuffix(strings.ToLower(filename), ".xml") {
 		logWriter.log("Detected XML backup file")
-		parseErr = s.parseXMLBackup(userDB, filePath, logWriter)
+		parseErr = s.parseXMLBackup(userID, userDB, filePath, logWriter)
 	} else {
 		logWriter.log("ERROR: Unsupported file type")
 		slog.Warn("Unsupported file type", "userID", userID, "file", filename)
@@ -248,7 +248,7 @@ func (s *AutoImportService) isFileStable(filePath string) bool {
 }
 
 // parseXMLBackup parses an XML backup file
-func (s *AutoImportService) parseXMLBackup(userDB *sql.DB, filePath string, logger *importLogger) error {
+func (s *AutoImportService) parseXMLBackup(userID string, userDB *sql.DB, filePath string, logger *importLogger) error {
 	logger.log("Parsing XML backup file")
 
 	file, err := os.Open(filePath)
@@ -263,7 +263,7 @@ func (s *AutoImportService) parseXMLBackup(userDB *sql.DB, filePath string, logg
 	logger.log("File size: %d bytes", fileSize)
 
 	// Parse the XML backup using streaming parser
-	totalProcessed, totalSkipped, err := ParseSMSBackupStreaming(userDB, file, 100)
+	totalProcessed, totalSkipped, err := ParseSMSBackupStreaming(userDB, userID, file, 100)
 	if err != nil {
 		return fmt.Errorf("failed to parse backup: %w", err)
 	}

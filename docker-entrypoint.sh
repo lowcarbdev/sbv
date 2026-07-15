@@ -18,8 +18,10 @@ fi
 SBV_USER="$(getent passwd "${PUID}" | cut -d: -f1)"
 
 # Ensure data directory exists and has correct permissions
-mkdir -p "${DB_PATH_PREFIX:-/data}"
-chown -R "${SBV_USER}:${SBV_GROUP}" "${DB_PATH_PREFIX:-/data}"
+DATA_DIR="${DATA_DIR:-${DB_PATH_PREFIX:-/data}}"
+mkdir -p "${DATA_DIR}"
+chown -R "${SBV_USER}:${SBV_GROUP}" "${DATA_DIR}"
+export DATA_DIR
 
 # Log the user we're running as
 echo "Running as UID=${PUID} GID=${PGID} (${SBV_USER}:${SBV_GROUP})"

@@ -771,7 +771,7 @@ func ProcessUploadedFile(userID string, username string, filePath string) {
 	defer file.Close()
 
 	// Process with streaming parser (batch size 1 for minimal memory)
-	messageCount, callCount, err := ParseSMSBackupStreaming(userDB, file, 1) // Insert immediately, no batching
+	messageCount, callCount, err := ParseSMSBackupStreaming(userDB, userID, file, 1) // Insert immediately, no batching
 	if err != nil {
 		slog.Error("Error processing file", "error", err)
 		SetUploadProgress(0, 0, "error")
@@ -790,7 +790,7 @@ func ProcessUploadedFile(userID string, username string, filePath string) {
 
 // ParseSMSBackupStreaming parses SMS backup file with streaming to reduce memory usage
 // Each message is inserted immediately and memory is freed aggressively
-func ParseSMSBackupStreaming(userDB *sql.DB, r io.Reader, batchSize int) (int, int, error) {
+func ParseSMSBackupStreaming(userDB *sql.DB, userID string, r io.Reader, batchSize int) (int, int, error) {
 	// Initialize progress tracking
 	uploadProgressLock.Lock()
 	uploadProgress = &UploadProgress{
@@ -880,6 +880,25 @@ func ParseSMSBackupStreaming(userDB *sql.DB, r io.Reader, batchSize int) (int, i
 				if err != nil {
 					slog.Error("Error converting MMS", "error", err)
 					continue
+				}
+
+				// Offload blob to disk store if configured (MMS only)
+				if msg.MediaData != nil {
+					store := GetUserBlobStore(userID)
+					if disk, ok := store.(*DiskBlobStore); ok {
+						filePath, blobErr := disk.Write(msg.MediaData, msg.MediaType)
+						if blobErr != nil {
+							slog.Warn("Failed to write blob to disk, storing inline", "error", blobErr)
+						} else {
+							if !msg.Date.IsZero() {
+								if err := disk.SetModTime(filePath, msg.Date); err != nil {
+									slog.Warn("Failed to set blob mtime", "path", filePath, "error", err)
+								}
+							}
+							msg.MediaFilePath = filePath
+							msg.MediaData = nil
+						}
+					}
 				}
 
 				// Insert immediately - no batching
