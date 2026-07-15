@@ -15,6 +15,7 @@ import (
 	"github.com/labstack/echo/v4/middleware"
 	"github.com/lowcarbdev/sbv/internal"
 	"golang.org/x/term"
+	"golang.org/x/time/rate"
 )
 
 var logger *slog.Logger
@@ -97,10 +98,20 @@ func main() {
 	e.Server.IdleTimeout = 2 * time.Minute
 	e.Server.MaxHeaderBytes = 1 << 20 // 1 MB max header size
 
+	// Rate limit login/register per IP to slow credential brute-forcing:
+	// bursts of 5 attempts, refilling one attempt every 10 seconds
+	authRateLimiter := middleware.RateLimiter(middleware.NewRateLimiterMemoryStoreWithConfig(
+		middleware.RateLimiterMemoryStoreConfig{
+			Rate:      rate.Limit(0.1),
+			Burst:     5,
+			ExpiresIn: 10 * time.Minute,
+		},
+	))
+
 	// Public routes (no authentication required)
 	// Apply NoCacheMiddleware to prevent browser caching of auth responses
-	e.POST("/api/auth/register", internal.HandleRegister, internal.NoCacheMiddleware)
-	e.POST("/api/auth/login", internal.HandleLogin, internal.NoCacheMiddleware)
+	e.POST("/api/auth/register", internal.HandleRegister, internal.NoCacheMiddleware, authRateLimiter)
+	e.POST("/api/auth/login", internal.HandleLogin, internal.NoCacheMiddleware, authRateLimiter)
 	e.POST("/api/auth/logout", internal.HandleLogout, internal.NoCacheMiddleware)
 
 	// Protected routes (authentication required)
