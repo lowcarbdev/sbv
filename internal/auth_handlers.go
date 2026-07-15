@@ -11,6 +11,21 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+// setSessionCookie sets the session cookie, marking it Secure when
+// SECURE_COOKIES=true or the request arrived over HTTPS (c.Scheme()
+// honors X-Forwarded-Proto for reverse proxy deployments)
+func setSessionCookie(c echo.Context, value string, expires time.Time) {
+	c.SetCookie(&http.Cookie{
+		Name:     "session_id",
+		Value:    value,
+		Expires:  expires,
+		HttpOnly: true,
+		Secure:   os.Getenv("SECURE_COOKIES") == "true" || c.Scheme() == "https",
+		SameSite: http.SameSiteLaxMode,
+		Path:     "/",
+	})
+}
+
 // RegistrationEnabled reports whether new user sign-ups are allowed
 func RegistrationEnabled() bool {
 	return os.Getenv("DISABLE_REGISTRATION") != "true"
@@ -87,14 +102,7 @@ func HandleRegister(c echo.Context) error {
 	}
 
 	// Set session cookie
-	c.SetCookie(&http.Cookie{
-		Name:     "session_id",
-		Value:    session.ID,
-		Expires:  session.ExpiresAt,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-	})
+	setSessionCookie(c, session.ID, session.ExpiresAt)
 
 	// Initialize user's database (using UUID as filename)
 	dbPathPrefix := os.Getenv("DB_PATH_PREFIX")
@@ -160,14 +168,7 @@ func HandleLogin(c echo.Context) error {
 	}
 
 	// Set session cookie
-	c.SetCookie(&http.Cookie{
-		Name:     "session_id",
-		Value:    session.ID,
-		Expires:  session.ExpiresAt,
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-	})
+	setSessionCookie(c, session.ID, session.ExpiresAt)
 
 	return c.JSON(http.StatusOK, AuthResponse{
 		Success: true,
@@ -185,14 +186,7 @@ func HandleLogout(c echo.Context) error {
 	}
 
 	// Clear cookie
-	c.SetCookie(&http.Cookie{
-		Name:     "session_id",
-		Value:    "",
-		Expires:  time.Now().Add(-1 * time.Hour),
-		HttpOnly: true,
-		SameSite: http.SameSiteLaxMode,
-		Path:     "/",
-	})
+	setSessionCookie(c, "", time.Now().Add(-1*time.Hour))
 
 	return c.JSON(http.StatusOK, map[string]bool{
 		"success": true,

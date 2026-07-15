@@ -74,7 +74,7 @@ sbv/
 
 1. User registers with username/password (bcrypt hashed)
 2. Login creates a session stored in the auth database
-3. Session ID stored in httpOnly cookie (`sbv_session`)
+3. Session ID stored in httpOnly cookie (`session_id`)
 4. Middleware validates session on protected routes
 5. Each user gets a unique database file: `sbv_[user-uuid].db`
 
