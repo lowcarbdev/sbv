@@ -300,14 +300,18 @@ func TestHandleMessagesConversationType(t *testing.T) {
 		t.Errorf("Expected status 200, got %d", rec.Code)
 	}
 
-	var activities []ActivityItem
-	if err := json.Unmarshal(rec.Body.Bytes(), &activities); err != nil {
+	var response struct {
+		Items []ActivityItem `json:"items"`
+		Total int            `json:"total"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &response); err != nil {
 		t.Fatalf("Failed to parse response: %v", err)
 	}
 
-	// Verify the response is valid JSON array (might be empty if address format doesn't match)
+	// Verify the response is a valid items/total envelope (items might be
+	// empty if address format doesn't match)
 	// The important thing is that the handler responds correctly with type=conversation
-	t.Logf("Got %d activities for address %s with type=conversation", len(activities), testAddress)
+	t.Logf("Got %d of %d activities for address %s with type=conversation", len(response.Items), response.Total, testAddress)
 }
 
 func TestHandleActivity(t *testing.T) {
