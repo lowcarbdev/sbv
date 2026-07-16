@@ -89,8 +89,11 @@ function Search({ searchQuery, setSearchQuery, results, setResults, loading, set
           <div className="input-group">
             <input
               type="text"
+              id="messageSearch"
+              name="messageSearch"
               className="form-control"
               placeholder="Search message contents..."
+              aria-label="Search message contents"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               autoFocus

@@ -62,10 +62,12 @@ function ChangePasswordModal({ onClose, onSuccess }) {
           </Alert>
         )}
         <Form onSubmit={handleSubmit}>
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3" controlId="currentPassword">
             <Form.Label>Current Password</Form.Label>
             <Form.Control
               type="password"
+              name="currentPassword"
+              autoComplete="current-password"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
               disabled={loading}
@@ -73,10 +75,12 @@ function ChangePasswordModal({ onClose, onSuccess }) {
               required
             />
           </Form.Group>
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3" controlId="newPassword">
             <Form.Label>New Password</Form.Label>
             <Form.Control
               type="password"
+              name="newPassword"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               disabled={loading}
@@ -87,10 +91,12 @@ function ChangePasswordModal({ onClose, onSuccess }) {
               Must be at least 6 characters
             </Form.Text>
           </Form.Group>
-          <Form.Group className="mb-3">
+          <Form.Group className="mb-3" controlId="confirmNewPassword">
             <Form.Label>Confirm New Password</Form.Label>
             <Form.Control
               type="password"
+              name="confirmNewPassword"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               disabled={loading}

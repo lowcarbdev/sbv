@@ -15,8 +15,10 @@ function DateFilter({ startDate, endDate, minDate, maxDate, onStartDateChange, o
         </svg>
 
         <div className="d-flex align-items-center gap-1 date-picker-wrapper">
-          <label className="fw-semibold mb-0 flex-shrink-0 small">From:</label>
+          <label htmlFor="dateFilterStart" className="fw-semibold mb-0 flex-shrink-0 small">From:</label>
           <DatePicker
+            id="dateFilterStart"
+            name="dateFilterStart"
             selected={startDate}
             onChange={onStartDateChange}
             selectsStart
@@ -31,8 +33,10 @@ function DateFilter({ startDate, endDate, minDate, maxDate, onStartDateChange, o
         </div>
 
         <div className="d-flex align-items-center gap-1 date-picker-wrapper">
-          <label className="fw-semibold mb-0 flex-shrink-0 small">To:</label>
+          <label htmlFor="dateFilterEnd" className="fw-semibold mb-0 flex-shrink-0 small">To:</label>
           <DatePicker
+            id="dateFilterEnd"
+            name="dateFilterEnd"
             selected={endDate}
             onChange={onEndDateChange}
             selectsEnd

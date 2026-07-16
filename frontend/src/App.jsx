@@ -353,8 +353,11 @@ function App() {
                   </svg>
                   <input
                     type="text"
+                    id="conversationFilter"
+                    name="conversationFilter"
                     className="form-control form-control-sm ps-4"
                     placeholder="Search..."
+                    aria-label="Filter conversations"
                     value={searchFilter}
                     onChange={(e) => setSearchFilter(e.target.value)}
                   />

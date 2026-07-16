@@ -241,6 +241,9 @@ function Upload({ onClose, onSuccess }) {
               <div className="mt-3">
                 <Form.Control
                   type="file"
+                  id="backupFileInput"
+                  name="backupFileInput"
+                  aria-label="Select backup XML files"
                   accept=".xml"
                   onChange={handleFileChange}
                   disabled={uploading}
