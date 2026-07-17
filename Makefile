@@ -12,11 +12,13 @@ build:
 build-heic:
 	./build.sh heic
 
+# Scoped to the module's own packages: ./... would descend into Go code
+# shipped inside frontend/node_modules
 test:
-	go test -tags fts5 ./...
+	go test -tags fts5 . ./internal/...
 
 vet:
-	go vet -tags fts5 ./...
+	go vet -tags fts5 . ./internal/...
 
 clean:
 	rm -f sbv
