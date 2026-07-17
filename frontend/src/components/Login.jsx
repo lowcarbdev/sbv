@@ -9,6 +9,8 @@ const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 function Login() {
   const [isLogin, setIsLogin] = useState(true)
   const [registrationEnabled, setRegistrationEnabled] = useState(true)
+  const [oidcEnabled, setOidcEnabled] = useState(false)
+  const [oidcProviderName, setOidcProviderName] = useState('SSO')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -23,6 +25,10 @@ function Login() {
         if (response.data.registration_enabled === false) {
           setRegistrationEnabled(false)
           setIsLogin(true)
+        }
+        if (response.data.oidc_enabled === true) {
+          setOidcEnabled(true)
+          setOidcProviderName(response.data.oidc_provider_name || 'SSO')
         }
       })
       .catch(() => {
@@ -174,6 +180,25 @@ function Login() {
                       <>{isLogin ? 'Sign In' : 'Create Account'}</>
                     )}
                   </button>
+
+                  {oidcEnabled && (
+                    <>
+                      <div className="d-flex align-items-center mb-3">
+                        <hr className="flex-grow-1" />
+                        <span className="px-2 text-muted small">or</span>
+                        <hr className="flex-grow-1" />
+                      </div>
+                      <a
+                        href={`${API_BASE}/auth/oidc/login`}
+                        className={`btn btn-outline-primary w-100 mb-3 ${loading ? 'disabled' : ''}`}
+                      >
+                        <svg style={{width: '1rem', height: '1rem'}} className="me-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                        </svg>
+                        Sign in with {oidcProviderName}
+                      </a>
+                    </>
+                  )}
 
                   {registrationEnabled && (
                     <div className="text-center">

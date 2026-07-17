@@ -112,6 +112,13 @@ func main() {
 	// Apply NoCacheMiddleware to prevent browser caching of auth responses
 	e.POST("/api/auth/register", internal.HandleRegister, internal.NoCacheMiddleware, authRateLimiter)
 	e.POST("/api/auth/login", internal.HandleLogin, internal.NoCacheMiddleware, authRateLimiter)
+
+	// OIDC single sign-on (enabled when OIDC_ISSUER_URL is set)
+	if internal.OIDCEnabled() {
+		e.GET("/api/auth/oidc/login", internal.HandleOIDCLogin, internal.NoCacheMiddleware, authRateLimiter)
+		e.GET("/api/auth/oidc/callback", internal.HandleOIDCCallback, internal.NoCacheMiddleware, authRateLimiter)
+		logger.Info("OIDC login enabled", "issuer", os.Getenv("OIDC_ISSUER_URL"), "provider", internal.OIDCProviderName())
+	}
 	e.POST("/api/auth/logout", internal.HandleLogout, internal.NoCacheMiddleware)
 
 	// Protected routes (authentication required)

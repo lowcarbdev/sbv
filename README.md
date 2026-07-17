@@ -65,6 +65,10 @@ services:
 - `DISABLE_REGISTRATION` - Set to `true` to prevent new user sign-ups (default: registration open). Useful after you've created your own account.
 - `SECURE_COOKIES` - Set to `true` to always mark the session cookie `Secure` (HTTPS only). The cookie is also marked `Secure` automatically when the request arrives over HTTPS, including via a reverse proxy that sets `X-Forwarded-Proto`.
 
+### OIDC Single Sign-On
+
+SBV can authenticate against any OIDC-compliant identity provider (Authentik, tinyauth, Pocket ID, Keycloak, ...). See [docs/OIDC.md](docs/OIDC.md) for setup instructions.
+
 **Note on PUID/PGID**: Setting these to match your host user ensures that files created in the mounted volume have the desired permissions. Find your UID/GID with `id -u` and `id -g`.
 
 ## Data Persistence

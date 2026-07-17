@@ -33,8 +33,10 @@ func RegistrationEnabled() bool {
 
 // HandleConfig returns public configuration for the frontend
 func HandleConfig(c echo.Context) error {
-	return c.JSON(http.StatusOK, map[string]bool{
+	return c.JSON(http.StatusOK, map[string]interface{}{
 		"registration_enabled": RegistrationEnabled(),
+		"oidc_enabled":         OIDCEnabled(),
+		"oidc_provider_name":   OIDCProviderName(),
 	})
 }
 
