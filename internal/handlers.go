@@ -54,6 +54,7 @@ func HandleUpload(c echo.Context) error {
 	// Get user ID and username from context early — needed by both paths
 	userID, ok := c.Get("user_id").(string)
 	if !ok {
+		file.Close()
 		return c.JSON(http.StatusUnauthorized, UploadResponse{
 			Success: false,
 			Error:   "User not authenticated",
@@ -61,6 +62,7 @@ func HandleUpload(c echo.Context) error {
 	}
 	username, ok := c.Get("username").(string)
 	if !ok {
+		file.Close()
 		return c.JSON(http.StatusUnauthorized, UploadResponse{
 			Success: false,
 			Error:   "User not authenticated",
