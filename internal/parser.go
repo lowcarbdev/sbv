@@ -972,7 +972,7 @@ func ParseSMSBackupStreaming(userDB *sql.DB, userID string, r io.Reader, batchSi
 }
 
 // processUploadedFileFromReaderSync is the testable core: parses r into userDB.
-func processUploadedFileFromReaderSync(userID, username string, r io.Reader, userDB *sql.DB) {
+func processUploadedFileFromReaderSync(userID, username string, r io.ReadCloser, userDB *sql.DB) {
 	slog.Info("Starting pipe-mode processing", "user", username)
 
 	messageCount, callCount, err := ParseSMSBackupStreaming(userDB, userID, r, 1)
@@ -993,12 +993,13 @@ func processUploadedFileFromReaderSync(userID, username string, r io.Reader, use
 }
 
 // ProcessUploadedFileFromReader processes r in the background without writing a temp file.
-// Intended to be called in a goroutine; the caller is responsible for closing r on error.
-func ProcessUploadedFileFromReader(userID, username string, r io.Reader) {
+// Intended to be called in a goroutine. On GetUserDB error, this function closes r.
+func ProcessUploadedFileFromReader(userID, username string, r io.ReadCloser) {
 	slog.Info("Starting background pipe-mode processing", "user", username)
 
 	userDB, err := GetUserDB(userID, username)
 	if err != nil {
+		r.Close()
 		slog.Error("Error getting user database", "error", err)
 		SetUploadProgress(0, 0, "error")
 		uploadProgressLock.Lock()

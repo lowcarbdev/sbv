@@ -3,6 +3,7 @@ package internal
 
 import (
 	"database/sql"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -300,7 +301,7 @@ func TestProcessUploadedFileFromReader(t *testing.T) {
 	}
 	defer db.Close()
 
-	r := strings.NewReader(sampleXML)
+	r := io.NopCloser(strings.NewReader(sampleXML))
 	// Call directly (not in goroutine) so we can observe results synchronously
 	processUploadedFileFromReaderSync("test-user", "testuser", r, db)
 
