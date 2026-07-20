@@ -1,8 +1,11 @@
 package internal
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -566,5 +569,83 @@ func TestGetUserDBHelperMissingUsername(t *testing.T) {
 
 	if !strings.Contains(err.Error(), "username not found") {
 		t.Errorf("Expected error about missing username, got: %v", err)
+	}
+}
+
+func TestHandleUploadPipeMode(t *testing.T) {
+	_, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Arrange: set pipe mode as default, restore after
+	SetDefaultUploadMode("pipe")
+	defer SetDefaultUploadMode("tempfile")
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	part, err := writer.CreateFormFile("file", "backup.xml")
+	if err != nil {
+		t.Fatalf("create form file: %v", err)
+	}
+	_, _ = io.WriteString(part, sampleXML)
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/upload", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+
+	e := echo.New()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", testUserID)
+	c.Set("username", "testuser")
+
+	err = HandleUpload(c)
+	if err != nil {
+		t.Fatalf("HandleUpload: %v", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d: %s", rec.Code, rec.Body.String())
+	}
+
+	var resp UploadResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if !resp.Success {
+		t.Errorf("expected success=true, got false: %s", resp.Error)
+	}
+	if !resp.Processing {
+		t.Errorf("expected processing=true")
+	}
+}
+
+func TestHandleUploadFormFieldOverride(t *testing.T) {
+	_, cleanup := setupTestDB(t)
+	defer cleanup()
+
+	// Server default is tempfile; form field requests pipe
+	SetDefaultUploadMode("tempfile")
+	defer SetDefaultUploadMode("tempfile")
+
+	body := &bytes.Buffer{}
+	writer := multipart.NewWriter(body)
+	_ = writer.WriteField("upload_mode", "pipe")
+	part, _ := writer.CreateFormFile("file", "backup.xml")
+	_, _ = io.WriteString(part, sampleXML)
+	writer.Close()
+
+	req := httptest.NewRequest(http.MethodPost, "/api/upload", body)
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	rec := httptest.NewRecorder()
+
+	e := echo.New()
+	c := e.NewContext(req, rec)
+	c.Set("user_id", testUserID)
+	c.Set("username", "testuser")
+
+	if err := HandleUpload(c); err != nil {
+		t.Fatalf("HandleUpload: %v", err)
+	}
+	if rec.Code != http.StatusOK {
+		t.Errorf("expected 200, got %d", rec.Code)
 	}
 }
