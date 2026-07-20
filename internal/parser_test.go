@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 const sampleXML = `<?xml version='1.0' encoding='UTF-8' standalone='yes' ?>
