@@ -48,7 +48,6 @@ func HandleUpload(c echo.Context) error {
 			Error:   "Failed to get file from form",
 		})
 	}
-	defer file.Close()
 
 	slog.Info("Receiving file", "filename", header.Filename, "size", header.Size)
 
@@ -79,11 +78,13 @@ func HandleUpload(c echo.Context) error {
 		pr, pw := io.Pipe()
 		go func() {
 			_, err := io.Copy(pw, file)
+			file.Close()
 			pw.CloseWithError(err)
 		}()
 		go ProcessUploadedFileFromReader(userID, username, pr)
 	} else {
 		tempFilePath, err := SaveUploadedFile(file, header.Filename)
+		file.Close()
 		if err != nil {
 			slog.Error("Error saving file", "error", err)
 			return c.JSON(http.StatusInternalServerError, UploadResponse{
