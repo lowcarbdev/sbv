@@ -23,9 +23,51 @@ var logger *slog.Logger
 func main() {
 	// Parse CLI flags
 	resetPassword := flag.String("reset-password", "", "Reset password for the specified username")
-	listUsers := flag.Bool("list-users", false, "List all users")
-	journalMode := flag.Bool("journal", false, "Use rollback journal mode instead of WAL (for network filesystems)")
+	listUsers     := flag.Bool("list-users", false, "List all users")
+	journalMode   := flag.Bool("journal", false, "Use rollback journal mode instead of WAL (for network filesystems)")
+	blobStorage   := flag.String("blob-storage", "", "Blob storage mode: 'db' (default) or 'disk'")
+	blobDir       := flag.String("blob-dir", "", "Base directory for disk blobs (default: <DB_PATH_PREFIX>/media)")
+	uploadMode    := flag.String("upload-mode", "", "Upload processing mode: 'tempfile' (default) or 'pipe'")
 	flag.Parse()
+
+	// Resolve blob storage config: flags take precedence over env vars
+	resolvedBlobStorage := *blobStorage
+	if resolvedBlobStorage == "" {
+		resolvedBlobStorage = os.Getenv("BLOB_STORAGE")
+	}
+	if resolvedBlobStorage == "" {
+		resolvedBlobStorage = "db"
+	}
+	if resolvedBlobStorage != "db" && resolvedBlobStorage != "disk" {
+		fmt.Fprintf(os.Stderr, "invalid --blob-storage value %q: must be 'db' or 'disk'\n", resolvedBlobStorage)
+		os.Exit(1)
+	}
+
+	resolvedUploadMode := *uploadMode
+	if resolvedUploadMode == "" {
+		resolvedUploadMode = os.Getenv("UPLOAD_MODE")
+	}
+	if resolvedUploadMode == "" {
+		resolvedUploadMode = "tempfile"
+	}
+	if resolvedUploadMode != "tempfile" && resolvedUploadMode != "pipe" {
+		fmt.Fprintf(os.Stderr, "invalid --upload-mode value %q: must be 'tempfile' or 'pipe'\n", resolvedUploadMode)
+		os.Exit(1)
+	}
+	internal.SetDefaultUploadMode(resolvedUploadMode)
+
+	dbPathPrefix := os.Getenv("DB_PATH_PREFIX")
+	if dbPathPrefix == "" {
+		dbPathPrefix = "."
+	}
+
+	resolvedBlobDir := *blobDir
+	if resolvedBlobDir == "" {
+		resolvedBlobDir = os.Getenv("BLOB_DIR")
+	}
+	if resolvedBlobDir == "" {
+		resolvedBlobDir = filepath.Join(dbPathPrefix, "media")
+	}
 
 	// Use WAL mode by default, unless -journal flag is set
 	internal.UseWALMode = !*journalMode
@@ -36,12 +78,17 @@ func main() {
 	}))
 	slog.SetDefault(logger)
 
-	// Initialize authentication database
-	dbPathPrefix := os.Getenv("DB_PATH_PREFIX")
-	if dbPathPrefix == "" {
-		dbPathPrefix = "."
+	if resolvedBlobStorage == "disk" {
+		internal.SetGlobalBlobStore(internal.NewDiskBlobStore(resolvedBlobDir))
+		logger.Info("Blob storage: disk", "dir", resolvedBlobDir)
+	} else {
+		logger.Info("Blob storage: db")
 	}
-	authDBPath := dbPathPrefix + "/sbv.db"
+
+	logger.Info("Upload mode", "mode", resolvedUploadMode)
+
+	// Initialize authentication database
+	authDBPath := filepath.Join(dbPathPrefix, "sbv.db")
 
 	err := internal.InitAuthDB(authDBPath)
 	if err != nil {
@@ -168,7 +215,10 @@ func main() {
 	}
 
 	// Start auto-import service
-	dataDir := dbPathPrefix + "/data"
+	dataDir := os.Getenv("DATA_DIR")
+	if dataDir == "" {
+		dataDir = filepath.Join(dbPathPrefix, "data")
+	}
 	autoImportService := internal.NewAutoImportService(dataDir)
 	autoImportService.Start()
 	defer autoImportService.Stop()

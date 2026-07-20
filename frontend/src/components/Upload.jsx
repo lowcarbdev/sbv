@@ -15,6 +15,7 @@ function Upload({ onClose, onSuccess }) {
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [totalFiles, setTotalFiles] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
+  const [uploadMode, setUploadMode] = useState('tempfile')
 
   const handleFileChange = (e) => {
     const selectedFiles = Array.from(e.target.files)
@@ -115,6 +116,7 @@ function Upload({ onClose, onSuccess }) {
   const uploadSingleFile = async (file) => {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('upload_mode', uploadMode)
 
     setUploadProgress(0)
     setCurrentStep(1)
@@ -272,6 +274,32 @@ function Upload({ onClose, onSuccess }) {
                 </div>
               </div>
             )}
+          </Form.Group>
+
+          <Form.Group className="mt-3">
+            <Form.Label className="small text-muted fw-semibold mb-1">Upload mode</Form.Label>
+            <div className="d-flex gap-3">
+              <Form.Check
+                type="radio"
+                id="mode-tempfile"
+                name="uploadMode"
+                label="Standard (temp file)"
+                value="tempfile"
+                checked={uploadMode === 'tempfile'}
+                onChange={() => setUploadMode('tempfile')}
+                disabled={uploading}
+              />
+              <Form.Check
+                type="radio"
+                id="mode-pipe"
+                name="uploadMode"
+                label="Streaming (pipe)"
+                value="pipe"
+                checked={uploadMode === 'pipe'}
+                onChange={() => setUploadMode('pipe')}
+                disabled={uploading}
+              />
+            </div>
           </Form.Group>
         </div>
 

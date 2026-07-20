@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -47,44 +48,56 @@ func HandleUpload(c echo.Context) error {
 			Error:   "Failed to get file from form",
 		})
 	}
-	defer file.Close()
 
 	slog.Info("Receiving file", "filename", header.Filename, "size", header.Size)
 
-	// Save uploaded file to temporary location first
-	tempFilePath, err := SaveUploadedFile(file, header.Filename)
-	if err != nil {
-		slog.Error("Error saving file", "error", err)
-		return c.JSON(http.StatusInternalServerError, UploadResponse{
-			Success: false,
-			Error:   "Failed to save uploaded file: " + err.Error(),
-		})
-	}
-
-	slog.Info("File saved", "path", tempFilePath)
-
-	// Get user ID from context
+	// Get user ID and username from context early — needed by both paths
 	userID, ok := c.Get("user_id").(string)
 	if !ok {
+		file.Close()
 		return c.JSON(http.StatusUnauthorized, UploadResponse{
 			Success: false,
 			Error:   "User not authenticated",
 		})
 	}
-
-	// Get username from context
 	username, ok := c.Get("username").(string)
 	if !ok {
+		file.Close()
 		return c.JSON(http.StatusUnauthorized, UploadResponse{
 			Success: false,
 			Error:   "User not authenticated",
 		})
 	}
 
-	// Start background processing with user context
-	go ProcessUploadedFile(userID, username, tempFilePath)
+	// Resolve effective mode: form field overrides server default
+	effectiveMode := GetDefaultUploadMode()
+	if formMode := c.Request().FormValue("upload_mode"); formMode == "pipe" || formMode == "tempfile" {
+		effectiveMode = formMode
+	}
+	slog.Info("Upload mode", "mode", effectiveMode, "filename", header.Filename)
 
-	// Return immediately - client will poll /api/progress for status
+	if effectiveMode == "pipe" {
+		pr, pw := io.Pipe()
+		go func() {
+			_, err := io.Copy(pw, file)
+			file.Close()
+			pw.CloseWithError(err)
+		}()
+		go ProcessUploadedFileFromReader(userID, username, pr)
+	} else {
+		tempFilePath, err := SaveUploadedFile(file, header.Filename)
+		file.Close()
+		if err != nil {
+			slog.Error("Error saving file", "error", err)
+			return c.JSON(http.StatusInternalServerError, UploadResponse{
+				Success: false,
+				Error:   "Failed to save uploaded file: " + err.Error(),
+			})
+		}
+		slog.Info("File saved", "path", tempFilePath)
+		go ProcessUploadedFile(userID, username, tempFilePath)
+	}
+
 	return c.JSON(http.StatusOK, UploadResponse{
 		Success:      true,
 		MessageCount: 0,
@@ -448,8 +461,13 @@ func HandleMedia(c echo.Context) error {
 	// Check if transcode is requested (for videos that browser can't play)
 	forceTranscode := c.QueryParam("transcode") == "true"
 
+	userID, ok := c.Get("user_id").(string)
+	if !ok {
+		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "User not authenticated"})
+	}
+
 	// Fetch media from database
-	media, contentType, err := GetMessageMedia(userDB, messageID)
+	media, contentType, err := GetMessageMedia(userDB, userID, messageID)
 	if err != nil {
 		slog.Error("Error getting media", "error", err)
 		return c.JSON(http.StatusNotFound, map[string]string{

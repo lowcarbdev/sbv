@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"sync"
@@ -155,6 +156,10 @@ func InitDB(filepath string) error {
 		return err
 	}
 
+	if err = addMediaFilePathColumn(db); err != nil {
+		return fmt.Errorf("failed to add media_file_path column: %w", err)
+	}
+
 	slog.Info("Database initialized successfully")
 	return nil
 }
@@ -261,6 +266,10 @@ func InitUserDB(userID string, filepath string) error {
 		return err
 	}
 
+	if err = addMediaFilePathColumn(userDB); err != nil {
+		return fmt.Errorf("failed to add media_file_path column: %w", err)
+	}
+
 	// Store in map
 	userDBsMutex.Lock()
 	userDBs[userID] = userDB
@@ -268,6 +277,35 @@ func InitUserDB(userID string, filepath string) error {
 
 	slog.Info("User database initialized", "user_id", userID, "path", filepath)
 	return nil
+}
+
+// addMediaFilePathColumn adds the media_file_path column to messages if it doesn't exist.
+func addMediaFilePathColumn(db *sql.DB) error {
+	rows, err := db.Query("PRAGMA table_info(messages)")
+	if err != nil {
+		return fmt.Errorf("PRAGMA table_info: %w", err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var cid int
+		var name, colType string
+		var notNull int
+		var dfltValue sql.NullString
+		var pk int
+		if err := rows.Scan(&cid, &name, &colType, &notNull, &dfltValue, &pk); err != nil {
+			return err
+		}
+		if name == "media_file_path" {
+			return nil // already exists
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	_, err = db.Exec("ALTER TABLE messages ADD COLUMN media_file_path TEXT")
+	return err
 }
 
 // GetUserDB retrieves the database connection for a specific user, creating it if it doesn't exist
@@ -283,10 +321,10 @@ func GetUserDB(userID string, username string) (*sql.DB, error) {
 			dbPathPrefix = "."
 		}
 		// Use UUID as database filename instead of sanitized username
-		filepath := fmt.Sprintf("%s/sbv_%s.db", dbPathPrefix, userID)
+		dbPath := filepath.Join(dbPathPrefix, fmt.Sprintf("sbv_%s.db", userID))
 
 		// InitUserDB will create the database if it doesn't exist
-		if err := InitUserDB(userID, filepath); err != nil {
+		if err := InitUserDB(userID, dbPath); err != nil {
 			return nil, fmt.Errorf("failed to initialize user database: %w", err)
 		}
 
@@ -318,13 +356,14 @@ func InsertMessage(userDB *sql.DB, msg *Message) error {
 		INSERT INTO messages (
 			record_type, address, body, type, date, read, thread_id, subject, media_type, media_data,
 			protocol, status, service_center, sub_id, contact_name, sender,
-			content_type, read_report, read_status, message_id, message_size, message_type, sim_slot, addresses
+			content_type, read_report, read_status, message_id, message_size, message_type, sim_slot, addresses,
+			media_file_path
 		)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT DO NOTHING
 	`
 	result, err := userDB.Exec(query,
-		recordType, // record_type: 1 = SMS, 2 = MMS
+		recordType,
 		msg.Address,
 		msg.Body,
 		msg.Type,
@@ -348,6 +387,7 @@ func InsertMessage(userDB *sql.DB, msg *Message) error {
 		msg.MessageType,
 		msg.SimSlot,
 		addressesJSON,
+		msg.MediaFilePath,
 	)
 	if err != nil {
 		slog.Debug("InsertMessage: Error inserting message", "error", err)
@@ -925,26 +965,44 @@ func GetMediaByAddress(userDB *sql.DB, address string, startDate, endDate *time.
 	return mediaItems, nil
 }
 
-func GetMessageMedia(userDB *sql.DB, messageID string) ([]byte, string, error) {
+func GetMessageMedia(userDB *sql.DB, userID string, messageID string) ([]byte, string, error) {
 	query := `
-		SELECT COALESCE(media_data, ''), COALESCE(media_type, '')
+		SELECT COALESCE(media_data, x''), COALESCE(media_type, ''), COALESCE(media_file_path, '')
 		FROM messages
 		WHERE id = ? AND record_type IN (1, 2)  -- 1 = SMS, 2 = MMS
 	`
 
 	slog.Debug("GetMessageMedia: Fetching media", "message_id", messageID)
-	slog.Debug("GetMessageMedia: SQL query", "query", query)
 
 	var mediaData []byte
 	var mediaType string
+	var mediaFilePath string
 
-	err := userDB.QueryRow(query, messageID).Scan(&mediaData, &mediaType)
+	err := userDB.QueryRow(query, messageID).Scan(&mediaData, &mediaType, &mediaFilePath)
 	if err != nil {
 		slog.Debug("GetMessageMedia: Error scanning row", "message_id", messageID, "error", err)
 		return nil, "", err
 	}
 
 	slog.Debug("GetMessageMedia: Found media", "media_type", mediaType, "data_length", len(mediaData), "message_id", messageID)
+
+	// Resolve bytes: file path takes priority over inline blob (legacy fallback)
+	if mediaFilePath != "" {
+		store := GetUserBlobStore(userID)
+		if _, isDB := store.(*DBBlobStore); isDB {
+			slog.Warn("GetMessageMedia: media_file_path set but blob storage is 'db' mode — check BLOB_STORAGE config", "path", mediaFilePath, "message_id", messageID)
+			return nil, "", fmt.Errorf("no media found")
+		}
+		fileData, fileMediaType, err := store.Read(mediaFilePath)
+		if err != nil {
+			slog.Error("GetMessageMedia: failed to read blob file", "path", mediaFilePath, "error", err)
+			return nil, "", fmt.Errorf("no media found")
+		}
+		if fileMediaType != "" {
+			mediaType = fileMediaType
+		}
+		mediaData = fileData
+	}
 
 	if len(mediaData) == 0 || mediaType == "" {
 		slog.Debug("GetMessageMedia: No media found", "message_id", messageID)
