@@ -4,7 +4,7 @@ import axios from 'axios'
 import { format } from 'date-fns'
 import './PrintView.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 // Fallback when the user's message limit setting can't be loaded.
 const DEFAULT_MESSAGE_LIMIT = 100000

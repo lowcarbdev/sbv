@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import LazyMedia from './LazyMedia'
 import MediaGrid from './MediaGrid'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 function MessageThread({ conversation, startDate, endDate, messageLimit }) {
   const { resolvedTheme } = useTheme()

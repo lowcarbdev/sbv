@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from 'axios'
 import { Modal, Button, Form, Alert, Spinner, ProgressBar } from 'react-bootstrap'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 function Upload({ onClose, onSuccess }) {
   const [files, setFiles] = useState([])
@@ -12,6 +12,7 @@ function Upload({ onClose, onSuccess }) {
   const [progress, setProgress] = useState(null)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState(1) // 1 = upload, 2 = processing
+  const [uploadPhase, setUploadPhase] = useState(null) // step 1 sub-phase: 'sending' | 'saving'
   const [currentFileIndex, setCurrentFileIndex] = useState(0)
   const [totalFiles, setTotalFiles] = useState(0)
   const [isDragging, setIsDragging] = useState(false)
@@ -103,11 +104,7 @@ function Upload({ onClose, onSuccess }) {
       }
     } catch (err) {
       console.error('Upload error:', err)
-      if (err.code === 'ECONNABORTED') {
-        setError('Upload timeout. The file may be too large.')
-      } else {
-        setError(err.response?.data?.error || err.message || 'Upload failed')
-      }
+      setError(err.response?.data?.error || err.message || 'Upload failed')
       setUploading(false)
     }
   }
@@ -115,149 +112,121 @@ function Upload({ onClose, onSuccess }) {
   const uploadSingleFile = async (file) => {
     setUploadProgress(0)
     setCurrentStep(1)
+    setUploadPhase('sending')
 
-    // Step 1: Upload file to server.
-    // We build the multipart body and stream it via fetch() instead of axios/XHR.
-    // XHR requires the browser to fully assemble the FormData body in memory before
-    // sending a single byte, which on a multi-GB file shows up as a long "pending"
-    // request with no upload progress. Streaming the file part directly avoids that
-    // staging pause; only the small text preamble/epilogue is buffered.
-    const boundary = `----sbvUpload${Date.now().toString(16)}`
-    const encoder = new TextEncoder()
-    const preamble = encoder.encode(
-      `--${boundary}\r\n` +
-      `Content-Disposition: form-data; name="file"; filename="${file.name.replace(/"/g, '%22')}"\r\n` +
-      `Content-Type: application/octet-stream\r\n\r\n`
-    )
-    const epilogue = encoder.encode(`\r\n--${boundary}--\r\n`)
-    const totalBytes = preamble.length + file.size + epilogue.length
-
-    // Reading the file from local disk is typically much faster than the
-    // request actually being sent over the network -- fetch() drains a
-    // ReadableStream request body into its own internal buffer as fast as
-    // the source can produce chunks, without exposing real wire-send
-    // backpressure back to page JS. So "bytes read and enqueued" alone
-    // reaches 100% almost instantly while the network transfer is still far
-    // behind (this is what was happening before).
+    // Step 1a: Send the file to the server.
     //
-    // To approximate real progress without that signal, track a rolling
-    // throughput estimate (bytes enqueued per elapsed second) and report the
-    // percentage from *elapsed time × observed rate* rather than from raw
-    // bytes-enqueued. Progress is also capped short of 100% until fetch()
-    // actually resolves (server has fully received the request), so the bar
-    // can't falsely claim completion before the upload is actually done.
-    const UPLOAD_DISPLAY_CAP = 99
-    const startTime = performance.now()
-    let bytesEnqueued = 0
+    // We send the raw File as the request body via XMLHttpRequest, instead
+    // of wrapping it in FormData. FormData forces the browser to serialize
+    // the whole multipart body (boundary + file bytes) before XHR can send
+    // a single byte, which on a multi-GB file is exactly what caused the
+    // long "hangs at the start with no progress" behavior. Sending the File
+    // directly as the body lets the browser stream it from disk as it
+    // sends, while still going through XHR (not fetch()) so we get a real
+    // upload.onprogress callback -- fetch() has no equivalent: its
+    // ReadableStream bodies are drained into fetch()'s own internal buffer
+    // as fast as the source can produce chunks, with no visibility into
+    // how much has actually gone out over the wire.
+    //
+    // Note that upload.onprogress only reflects bytes handed to the OS
+    // socket, not bytes the *server* has actually read off the wire and
+    // saved to disk -- on a fast connection those can diverge a lot for a
+    // large file, so this alone would still reach 100% before the server is
+    // actually done. Step 1b (below) polls the server's own receive
+    // progress to cover that gap.
+    //
+    // The two progress sources are independent and uncoordinated, and can
+    // race and briefly disagree. Route both through this helper so the
+    // displayed number never jumps backward or flickers between stale and
+    // fresher reads.
     let displayedProgress = 0
-
-    const updateDisplayedProgress = () => {
-      const elapsedSeconds = (performance.now() - startTime) / 1000
-      if (elapsedSeconds <= 0) return
-      const rate = bytesEnqueued / elapsedSeconds // bytes/sec observed so far
-      // Project remaining time at the current rate; this naturally slows
-      // down (rather than jumping) once local reads finish and bytesEnqueued
-      // stops growing, since elapsed time keeps advancing while bytes don't.
-      const estimatedTotalSeconds = rate > 0 ? totalBytes / rate : 0
-      const estimatedPercent = estimatedTotalSeconds > 0
-        ? (elapsedSeconds / estimatedTotalSeconds) * 100
-        : 0
-      // Never let the displayed value go backwards or exceed the cap.
-      displayedProgress = Math.min(UPLOAD_DISPLAY_CAP, Math.max(displayedProgress, Math.round(estimatedPercent)))
+    const reportProgress = (percent) => {
+      displayedProgress = Math.max(displayedProgress, percent)
       setUploadProgress(displayedProgress)
     }
 
-    const reportProgress = (chunkLength) => {
-      bytesEnqueued += chunkLength
-      updateDisplayedProgress()
-    }
+    const uploadPromise = new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest()
+      xhr.open('POST', `${API_BASE}/upload`)
+      xhr.withCredentials = true
+      xhr.setRequestHeader('Content-Type', 'application/octet-stream')
+      xhr.setRequestHeader('X-Filename', file.name)
 
-    // Compose preamble + file (streamed straight from disk) + epilogue into one stream,
-    // reporting progress as each piece is actually read for send.
-    const combined = new ReadableStream({
-      async start(controller) {
-        controller.enqueue(preamble)
-        reportProgress(preamble.length)
-
-        const reader = file.stream().getReader()
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-          controller.enqueue(value)
-          reportProgress(value.byteLength)
+      // Browsers can fire upload.onprogress many times per second, far
+      // faster than the UI needs -- throttle how often it actually
+      // triggers a re-render so the percentage doesn't visibly flicker.
+      let lastReported = 0
+      xhr.upload.onprogress = (event) => {
+        if (!event.lengthComputable) return
+        const now = performance.now()
+        const percent = Math.round((event.loaded / event.total) * 100)
+        if (percent === 100 || now - lastReported >= 250) {
+          lastReported = now
+          reportProgress(percent)
         }
+      }
 
-        controller.enqueue(epilogue)
-        reportProgress(epilogue.length)
-        controller.close()
-      },
+      xhr.onload = () => {
+        let parsed
+        try {
+          parsed = JSON.parse(xhr.responseText)
+        } catch {
+          reject(new Error(`Upload failed with status ${xhr.status}`))
+          return
+        }
+        if (xhr.status < 200 || xhr.status >= 300 || !parsed.success) {
+          reject(new Error(parsed.error || `Upload failed with status ${xhr.status}`))
+          return
+        }
+        resolve(parsed)
+      }
+
+      xhr.onerror = () => reject(new Error('Upload failed'))
+      xhr.onabort = () => reject(new Error('Upload cancelled'))
+
+      xhr.send(file)
     })
 
-    // Streaming request bodies require a secure context (HTTPS or localhost) in
-    // Chrome/Edge; over plain HTTP on any other origin, fetch() will construct the
-    // Request without error but then reject the send with "Failed to fetch". Gate
-    // on window.isSecureContext so we fall back cleanly instead of failing at send time.
-    const canStream = typeof Request !== 'undefined' && window.isSecureContext && (() => {
-      try {
-        // Feature-detect streaming request bodies (Chrome/Edge). Safari/Firefox
-        // currently don't support this and will throw or silently buffer.
-        return new Request('https://example.invalid', {
-          method: 'POST',
-          body: new ReadableStream(),
-          duplex: 'half',
-        }).headers !== undefined
-      } catch {
-        return false
+    // Step 1b: Track the server's receive/save progress in parallel with
+    // the send. The server starts reading the request body as soon as it
+    // arrives (before the whole thing is sent, and definitely before it's
+    // fully written to disk for a multi-GB file), so this can legitimately
+    // start showing progress while the XHR send is still in flight, and is
+    // what carries the bar the rest of the way once the send itself hits
+    // 100%.
+    let pollReceiveProgress = true
+    const receiveProgressPromise = (async () => {
+      while (pollReceiveProgress) {
+        await new Promise(r => setTimeout(r, 250))
+        try {
+          const response = await axios.get(`${API_BASE}/progress`)
+          const data = response.data
+          if (data?.status === 'receiving' && data.total_bytes > 0) {
+            setUploadPhase('saving')
+            reportProgress(Math.min(100, Math.round((data.bytes_received / data.total_bytes) * 100)))
+          } else if (data?.status && data.status !== 'no_upload') {
+            // Server has moved past receiving (e.g. into parsing) --
+            // nothing more for this poll loop to do.
+            return
+          }
+        } catch (err) {
+          console.error('Error checking receive progress:', err)
+        }
       }
     })()
 
-    let res
-    if (canStream) {
-      // Keep the estimate advancing (based on elapsed time) even after local
-      // reads finish and stop producing reportProgress calls -- otherwise the
-      // bar would freeze at whatever percent it reached when the disk read
-      // completed, which is exactly the "looks done but isn't" problem. Only
-      // meaningful for the streaming path; the buffered fallback below
-      // already jumps straight to 100% once the browser has the full body.
-      const progressTicker = setInterval(updateDisplayedProgress, 250)
-      try {
-        res = await fetch(`${API_BASE}/upload`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: {
-            'Content-Type': `multipart/form-data; boundary=${boundary}`,
-          },
-          body: combined,
-          duplex: 'half',
-        })
-      } finally {
-        clearInterval(progressTicker)
-      }
-      // fetch() only resolves once the server has fully received the
-      // request, so this is the first point we can honestly report 100%.
-      setUploadProgress(100)
-    } else {
-      // Fallback for browsers without streaming request body support.
-      // This still buffers in-memory (same limitation as before) but keeps
-      // uploads working everywhere.
-      const formData = new FormData()
-      formData.append('file', file)
-      res = await fetch(`${API_BASE}/upload`, {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-      })
-      setUploadProgress(100)
+    try {
+      await uploadPromise
+    } finally {
+      pollReceiveProgress = false
+      await receiveProgressPromise
     }
 
-    const data = await res.json()
-
-    if (!res.ok || !data.success) {
-      throw new Error(data.error || 'Upload failed')
-    }
+    setUploadProgress(100)
 
     // File uploaded successfully, move to step 2
     setUploadProgress(0) // Reset for processing step
+    setUploadPhase(null)
     setCurrentStep(2)
 
     // Wait for processing to complete
@@ -406,7 +375,9 @@ function Upload({ onClose, onSuccess }) {
             )}
             <div className="d-flex justify-content-between align-items-center mb-2">
               <small className="text-muted fw-semibold">
-                Step {currentStep} of 2: {currentStep === 1 ? 'Uploading file' : 'Processing messages'}
+                Step {currentStep} of 2: {currentStep === 1
+                  ? (uploadPhase === 'saving' ? 'Saving file on server' : 'Uploading file')
+                  : 'Processing messages'}
               </small>
               <small className="text-muted fw-bold">{uploadProgress}%</small>
             </div>
@@ -418,7 +389,9 @@ function Upload({ onClose, onSuccess }) {
             />
             {currentStep === 1 && files[currentFileIndex - 1] && (
               <small className="text-muted mt-2 d-block">
-                Uploading {files[currentFileIndex - 1].name} ({(files[currentFileIndex - 1].size / (1024 * 1024)).toFixed(2)} MB) to server...
+                {uploadPhase === 'saving'
+                  ? `Server is saving ${files[currentFileIndex - 1].name} (${(files[currentFileIndex - 1].size / (1024 * 1024)).toFixed(2)} MB)...`
+                  : `Uploading ${files[currentFileIndex - 1].name} (${(files[currentFileIndex - 1].size / (1024 * 1024)).toFixed(2)} MB) to server...`}
               </small>
             )}
             {currentStep === 2 && progress && (

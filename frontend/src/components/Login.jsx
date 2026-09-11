@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router'
 import ThemeToggle from './ThemeToggle'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true)

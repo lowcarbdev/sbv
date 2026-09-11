@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import './Summary.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 // Color palette
 const COLORS = ['#0d6efd', '#198754', '#ffc107', '#dc3545', '#6c757d', '#0dcaf0', '#6610f2', '#d63384']

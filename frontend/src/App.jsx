@@ -16,7 +16,7 @@ import SettingsModal from './components/SettingsModal'
 import ThemeToggle from './components/ThemeToggle'
 import './App.css'
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
+const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
 function App() {
   const navigate = useNavigate()

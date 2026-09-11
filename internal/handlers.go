@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"os"
@@ -28,31 +29,66 @@ func getUserDB(c echo.Context) (*sql.DB, error) {
 }
 
 func HandleUpload(c echo.Context) error {
-	// Use a smaller memory limit for the form parsing itself (32 MB)
-	// Large files will be streamed directly to disk
-	err := c.Request().ParseMultipartForm(32 << 20) // 32 MB max in memory
-	if err != nil {
-		slog.Error("Error parsing form", "error", err)
-		return c.JSON(http.StatusBadRequest, UploadResponse{
-			Success: false,
-			Error:   "Failed to parse form data. File may be too large or corrupted.",
-		})
+	var uploadedFile io.Reader
+	var filename string
+
+	// The frontend uploads the raw file body directly (Content-Type:
+	// application/octet-stream, filename in X-Filename) rather than
+	// multipart/form-data. This lets it send the file as a plain Blob body
+	// via XMLHttpRequest, which gives accurate upload.onprogress events
+	// (real bytes sent over the wire) without the browser having to
+	// serialize a multipart body into memory first -- multipart form
+	// parsing/serialization of a multi-GB file is what caused large
+	// uploads to stall for tens of seconds before any bytes were sent.
+	//
+	// Multipart/form-data is still accepted as a fallback for any other
+	// caller (e.g. API scripts, older clients).
+	if strings.HasPrefix(c.Request().Header.Get("Content-Type"), "application/octet-stream") {
+		filename = c.Request().Header.Get("X-Filename")
+		if filename == "" {
+			return c.JSON(http.StatusBadRequest, UploadResponse{
+				Success: false,
+				Error:   "X-Filename header required",
+			})
+		}
+		uploadedFile = c.Request().Body
+	} else {
+		// Use a smaller memory limit for the form parsing itself (32 MB)
+		// Large files will be streamed directly to disk
+		err := c.Request().ParseMultipartForm(32 << 20) // 32 MB max in memory
+		if err != nil {
+			slog.Error("Error parsing form", "error", err)
+			return c.JSON(http.StatusBadRequest, UploadResponse{
+				Success: false,
+				Error:   "Failed to parse form data. File may be too large or corrupted.",
+			})
+		}
+
+		file, header, err := c.Request().FormFile("file")
+		if err != nil {
+			slog.Error("Error getting file", "error", err)
+			return c.JSON(http.StatusBadRequest, UploadResponse{
+				Success: false,
+				Error:   "Failed to get file from form",
+			})
+		}
+		defer file.Close()
+
+		uploadedFile = file
+		filename = header.Filename
 	}
 
-	file, header, err := c.Request().FormFile("file")
-	if err != nil {
-		slog.Error("Error getting file", "error", err)
-		return c.JSON(http.StatusBadRequest, UploadResponse{
-			Success: false,
-			Error:   "Failed to get file from form",
-		})
-	}
-	defer file.Close()
+	slog.Info("Receiving file", "filename", filename)
 
-	slog.Info("Receiving file", "filename", header.Filename, "size", header.Size)
+	// Track receive/save progress so the client can show real progress past
+	// the point where its own upload.onprogress reports 100% -- that event
+	// only reflects bytes handed to the OS socket, not bytes the server has
+	// actually read off the wire and written to disk, which for a large
+	// file over a fast connection can lag well behind.
+	StartReceivingUpload(c.Request().ContentLength)
 
 	// Save uploaded file to temporary location first
-	tempFilePath, err := SaveUploadedFile(file, header.Filename)
+	tempFilePath, err := SaveUploadedFile(uploadedFile, filename)
 	if err != nil {
 		slog.Error("Error saving file", "error", err)
 		return c.JSON(http.StatusInternalServerError, UploadResponse{

@@ -609,10 +609,18 @@ type UploadProgress struct {
 	ProcessedMessages int       `json:"processed_messages"`
 	TotalCalls        int       `json:"total_calls"`
 	ProcessedCalls    int       `json:"processed_calls"`
-	Status            string    `json:"status"` // "parsing", "importing", "completed", "error"
-	ErrorMessage      string    `json:"error_message,omitempty"`
-	StartTime         time.Time `json:"start_time"`
-	mu                sync.RWMutex
+	// BytesReceived/TotalBytes cover the "receiving" phase: the server is
+	// still reading the request body and writing it to disk. The browser's
+	// XHR upload.onprogress only reflects bytes handed to the OS socket
+	// buffer, which can reach 100% well before the server has finished
+	// reading and saving a large file -- these fields let the client keep
+	// showing real progress across that gap instead of appearing to hang.
+	BytesReceived int64     `json:"bytes_received,omitempty"`
+	TotalBytes    int64     `json:"total_bytes,omitempty"`
+	Status        string    `json:"status"` // "receiving", "parsing", "importing", "completed", "error"
+	ErrorMessage  string    `json:"error_message,omitempty"`
+	StartTime     time.Time `json:"start_time"`
+	mu            sync.RWMutex
 }
 
 var (
@@ -638,10 +646,41 @@ func GetUploadProgress() *UploadProgress {
 		ProcessedMessages: uploadProgress.ProcessedMessages,
 		TotalCalls:        uploadProgress.TotalCalls,
 		ProcessedCalls:    uploadProgress.ProcessedCalls,
+		BytesReceived:     uploadProgress.BytesReceived,
+		TotalBytes:        uploadProgress.TotalBytes,
 		Status:            uploadProgress.Status,
 		ErrorMessage:      uploadProgress.ErrorMessage,
 		StartTime:         uploadProgress.StartTime,
 	}
+}
+
+// StartReceivingUpload initializes progress tracking for the "receiving"
+// phase (server reading/saving the request body), before parsing begins.
+func StartReceivingUpload(totalBytes int64) {
+	uploadProgressLock.Lock()
+	defer uploadProgressLock.Unlock()
+
+	uploadProgress = &UploadProgress{
+		TotalBytes: totalBytes,
+		Status:     "receiving",
+		StartTime:  time.Now(),
+	}
+}
+
+// UpdateReceivingProgress updates how many bytes of the upload the server
+// has read and written to disk so far.
+func UpdateReceivingProgress(bytesReceived int64) {
+	uploadProgressLock.RLock()
+	defer uploadProgressLock.RUnlock()
+
+	if uploadProgress == nil {
+		return
+	}
+
+	uploadProgress.mu.Lock()
+	defer uploadProgress.mu.Unlock()
+
+	uploadProgress.BytesReceived = bytesReceived
 }
 
 // SetUploadProgress initializes or updates the upload progress
@@ -728,14 +767,43 @@ func SaveUploadedFile(file io.Reader, filename string) (string, error) {
 	}
 	defer tempFile.Close()
 
-	// Copy uploaded file to temp file
-	_, err = io.Copy(tempFile, file)
+	// Copy uploaded file to temp file, reporting bytes received as we go so
+	// clients can show real progress through the receive+save phase -- the
+	// browser's own upload progress event only reflects bytes sent over the
+	// wire, not bytes the server has actually read and written to disk.
+	_, err = io.Copy(tempFile, &receiveProgressReader{reader: file})
 	if err != nil {
 		os.Remove(tempFile.Name())
 		return "", fmt.Errorf("failed to save file: %v", err)
 	}
 
 	return tempFile.Name(), nil
+}
+
+// receiveProgressReader wraps an io.Reader and reports cumulative bytes read
+// via UpdateReceivingProgress as the upload is streamed to disk. Updates are
+// throttled to avoid taking the progress lock on every small read.
+type receiveProgressReader struct {
+	reader       io.Reader
+	total        int64
+	lastReported time.Time
+}
+
+func (r *receiveProgressReader) Read(p []byte) (int, error) {
+	n, err := r.reader.Read(p)
+	if n > 0 {
+		r.total += int64(n)
+		if time.Since(r.lastReported) >= 250*time.Millisecond {
+			UpdateReceivingProgress(r.total)
+			r.lastReported = time.Now()
+		}
+	}
+	if err == io.EOF {
+		// Always report the final count so the client sees the receive
+		// phase reach 100% rather than stalling at the last throttled value.
+		UpdateReceivingProgress(r.total)
+	}
+	return n, err
 }
 
 // ProcessUploadedFile processes the uploaded file in the background
