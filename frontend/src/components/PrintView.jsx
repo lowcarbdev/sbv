@@ -6,6 +6,9 @@ import './PrintView.css'
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8085/api'
 
+// Fallback when the user's message limit setting can't be loaded.
+const DEFAULT_MESSAGE_LIMIT = 100000
+
 function PrintView() {
   const { address } = useParams()
   const [searchParams] = useSearchParams()
@@ -33,13 +36,25 @@ function PrintView() {
   const fetchConversation = async (address, startDate, endDate) => {
     try {
       setLoading(true)
-      const params = { address, type: 'conversation' }
+
+      // Use the user's configured message limit so the export isn't
+      // truncated below what they'd see in the app itself.
+      let limit = DEFAULT_MESSAGE_LIMIT
+      try {
+        const settingsResponse = await axios.get(`${API_BASE}/settings`)
+        limit = settingsResponse.data?.conversations?.message_limit || DEFAULT_MESSAGE_LIMIT
+      } catch (settingsError) {
+        console.error('Failed to fetch settings, using default message limit:', settingsError)
+      }
+
+      const params = { address, type: 'conversation', limit }
       if (startDate) params.start = startDate
       if (endDate) params.end = endDate
 
-      // Use /messages endpoint with type=conversation to get all types (SMS, MMS, calls)
+      // Use /messages endpoint with type=conversation to get all types (SMS, MMS, calls).
+      // This endpoint returns a paginated shape: { items, total }.
       const response = await axios.get(`${API_BASE}/messages`, { params })
-      const items = response.data || []
+      const items = response.data?.items || []
 
       setMessages(items)
 
@@ -131,7 +146,7 @@ function PrintView() {
     try {
       const date = new Date(dateString)
       return format(date, 'MMM d, yyyy h:mm a')
-    } catch (e) {
+    } catch {
       return ''
     }
   }
