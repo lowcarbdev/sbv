@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/hex"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -23,6 +24,14 @@ func InitAuthDB(filepath string) error {
 
 	if err = authDB.Ping(); err != nil {
 		return err
+	}
+
+	// The auth database holds bcrypt password hashes, session tokens, and user
+	// settings. Restrict it to the owner so other local accounts can't read
+	// those secrets straight off disk; sql.Open may create the file with a
+	// looser mode depending on umask, so enforce it explicitly here.
+	if err = os.Chmod(filepath, 0600); err != nil {
+		return fmt.Errorf("failed to restrict auth database file permissions: %w", err)
 	}
 
 	// Set busy timeout for better concurrent access
